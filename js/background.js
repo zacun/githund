@@ -2,7 +2,7 @@ let folders = new Array();
 let clearStorage = browser.storage.local.clear();
 clearStorage.then(onCleared, onError);
 async function createTab() {
-    browser.tabs.create({url: "./html/page.html"}).then(res => {
+    browser.tabs.create({url: "../html/page.html"}).then(res => {
         console.log("Création du nouvel onglet.");
     });
 }
