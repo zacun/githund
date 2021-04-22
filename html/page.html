@@ -10,29 +10,46 @@
 </head>
 <body>
     <div id="error">
-        <h1>Vous n'avez sélectionné aucun dossier.</h1>
+        <h1>No folders were selected</h1>
     </div>
-    <div id="folders">
-        <h1>Liste des dossiers</h1>
-        <ul></ul>
-    </div>
-    <div id="preview">
-        <h1>Aperçu des messages</h1>
-        <ul></ul>
-    </div>
-    <div id="messages">
-        <h1>Messages complets</h1>
-        <p class="msg"></p>
+    <div id="main">
+        <section id="folders">
+            <h2>Folders</h2>
+            <ul></ul>
+        </section>
+        <div id="messages">
+            <section id="messages-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Correspondents</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+            <section id="messages-content">
+                <div id="message-info"></div>
+                <div id="msg"></div>
+            </section>
+        </div>
     </div>
 
+    <!-- Templates -->
     <script id="template-listFolders" type="x-tmpl-mustache">
         {{#.}}
-            <li>{{folderName}}</li>
+            <li class="folder-name">{{folderName}}</li>
         {{/.}}
     </script>
     <script id="template-listMessages" type="x-tmpl-mustache">
         {{#.}}
-            <li data-id={{id}}>{{subject}}</li>
+            <tr data-id={{id}} class="message-subject">
+                <td>{{subject}}</td>
+                <td>{{author}}</td>
+                <td>{{date}}</td>
+            </tr>
         {{/.}}
     </script>
     <script id="template-fullMessages" type="x-tmpl-mustache">

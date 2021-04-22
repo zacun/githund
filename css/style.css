@@ -1,11 +1,82 @@
-#messages .msg {
-    white-space: pre-wrap;
+/**
+* General
+*/
+*,
+::after,
+::before {
+    box-sizing: border-box;
 }
-
 #error {
     display: none;
 }
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+#main {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+}
+#messages {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
 
-#preview ul li {
+/**
+* folders panel
+*/
+#folders {
+    width: 15vh;
+    border-right: 1px solid gray;
+}
+.folder-name:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+/**
+* Messages list panel
+*/
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+thead tr {
+    border-bottom: 1px solid grey;
+}
+table th + th {
+    border-left: 1px solid grey;
+} 
+th {
+    text-align: left;
+}
+#messages-list {
+    border-bottom: 1px solid grey;
+    flex: 1;
+}
+.message-subject {
     cursor: pointer;
 }
+.message-subject:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+/**
+* Messages content list panel
+*/
+#messages-content {
+    flex: 1;
+}
+/*
+#msg {
+    white-space: pre-wrap;
+}
+*/

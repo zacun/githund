@@ -20,27 +20,33 @@ async function start() {
             let res = await getHeaderFromIdMessage(msg.id);
             let header = res[0];
             if (header.hasOwnProperty("x-github-recipient-address")) {
-                fromGit.push(msg);
+                let date = new Date(msg.date);
+                let tmpDate = date.getDate() + '/' + date.getMonth()+1 + '/' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+                fromGit.push({
+                    id: msg.id,
+                    subject: msg.subject,
+                    author: msg.author,
+                    date: tmpDate
+                });
             }
         }
         fillTemplate("template-listFolders", foldersName, "folders ul");
-        fillTemplate("template-listMessages", fromGit, "preview ul");
-        $('#preview ul li').click(async function (e) {
+        fillTemplate("template-listMessages", fromGit, "messages-list tbody");
+        $('.message-subject').click(async function (e) {
             let id = $(this).data().id;
             let fullMessage = await browser.messages.getFull(id);
             let str;
             if (fullMessage.parts[0].body != null) {
                 str = fullMessage.parts[0].body;
             } else {
-                str = fullMessage.parts[0].parts[0].body + fullMessage.parts[0].parts[1].body;
-                
+                str = fullMessage.parts[0].parts[1].body;
             }
-            $('#messages p').html(str);
+            $('#msg').html(str);
         });
     } else {
         $('#folders').hide();
-        $('#preview').hide();
-        $('#messages').hide();
+        $('#messages-list').hide();
+        $('#messages-content').hide();
         $('#error').show();
     }
 }
@@ -53,7 +59,6 @@ function fillTemplate(idTemplate, data, idElem) {
 }
 
 async function listMessagesFromFolder(folder) {
-    console.log(folder)
     let messages = new Array();
     let page = await browser.messages.list(folder);
     messages = page.messages;
