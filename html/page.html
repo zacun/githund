@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Githund</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../utilities/jquery-3.6.0.min.js" type="module"></script>
+    <script src="../utilities/mustache.min.js" type="module"></script>    
+    <script src="../js/page.js"></script>  
+</head>
+<body>
+    <div id="error">
+        <h1>Vous n'avez sélectionné aucun dossier.</h1>
+    </div>
+    <div id="folders">
+        <h1>Liste des dossiers</h1>
+        <ul></ul>
+    </div>
+    <div id="preview">
+        <h1>Aperçu des messages</h1>
+        <ul></ul>
+    </div>
+    <div id="messages">
+        <h1>Messages complets</h1>
+        <p class="msg"></p>
+    </div>
+
+    <script id="template-listFolders" type="x-tmpl-mustache">
+        {{#.}}
+            <li>{{folderName}}</li>
+        {{/.}}
+    </script>
+    <script id="template-listMessages" type="x-tmpl-mustache">
+        {{#.}}
+            <li data-id={{id}}>{{subject}}</li>
+        {{/.}}
+    </script>
+    <script id="template-fullMessages" type="x-tmpl-mustache">
+        {{{message}}}
+    </script>
+</body>
+</html>

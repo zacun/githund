@@ -1,0 +1,11 @@
+#messages .msg {
+    white-space: pre-wrap;
+}
+
+#error {
+    display: none;
+}
+
+#preview ul li {
+    cursor: pointer;
+}
