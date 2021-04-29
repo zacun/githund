@@ -12,6 +12,7 @@
     <div id="error">
         <h1>Vous n'avez sélectionné aucun dossier.</h1>
     </div>
+    <button id="btnThread">Thread view</button>
     <div id="folders">
         <h1>Liste des dossiers</h1>
         <ul></ul>
@@ -37,6 +38,11 @@
     </script>
     <script id="template-fullMessages" type="x-tmpl-mustache">
         {{{message}}}
+    </script>
+    <script id="template-listThread" type="x-tmpl-mustache">
+        {{#.}}
+            <li data-id={{id}}>{{subject}}</li>
+        {{/.}}
     </script>
 </body>
 </html>
