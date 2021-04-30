@@ -1,37 +1,46 @@
 let listFolders = new Array();
-let listMessages = new Array(); //Array of array of object with folder name
-let fromGit = new Array();
+const Mails = new Object();
+const Threads = { nbThreads: 0, };
 
 start();
 
-async function start() {    
+async function start() {
     let getStorage = await browser.storage.local.get('folders');
     let foldersName = new Array();
     listFolders = getStorage.folders;
     if (listFolders !== undefined) {
-        for (var folder of listFolders) {
-            let messages = await listMessagesFromFolder(folder);
-            listMessages = listMessages.concat(messages);
-            foldersName.push({
-                folderName: folder.name
-            });
-        }
-        for (var msg of listMessages) {
-            let res = await getHeaderFromIdMessage(msg.id);
-            let header = res[0];
-            if (header.hasOwnProperty("x-github-recipient-address")) {
-                let date = new Date(msg.date);
-                let tmpDate = date.getDate() + '/' + date.getMonth()+1 + '/' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
-                fromGit.push({
-                    id: msg.id,
-                    subject: msg.subject,
-                    author: msg.author,
-                    date: tmpDate
-                });
+        for (let folder of listFolders) {
+            let messages = await getGitMessagesFromFolder(folder);
+            for (let message of messages) {
+                if(isThreaded(message)) {
+                    let dataThread = addToThreads(message);
+                    let date = new Date(message.date);
+                    let tmpDate = date.getDate() + '/' + date.getMonth()+1 + '/' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+                    let data = {
+                        idThread: dataThread.idThread,
+                        event: dataThread.event,
+                        idEvent: dataThread.idEvent,
+                        repo: dataThread.repo,
+                    };
+                    addToMails(dataThread.idThread, data, message, tmpDate, null);                    
+                } else {
+                    let date = new Date(message.date);
+                    let tmpDate = date.getDate() + '/' + date.getMonth()+1 + '/' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+                    let data = {
+                        id: message.id,
+                        subject: message.subject,
+                        author: message.author,
+                        date: tmpDate,
+                    };
+                    addToMails(-1, data, message, tmpDate, folder.name);
+                }
             }
+            foldersName.push(folder.name);
         }
-        fillTemplate("template-listFolders", foldersName, "folders ul");
-        fillTemplate("template-listMessages", fromGit, "messages-list tbody");
+        console.log("Mails : ", Mails);
+        console.log("Threads : ",Threads);
+        /*fillTemplate("template-listFolders", foldersName, "folders ul");
+        fillTemplate("template-listMessages", Mails, "messages-list tbody");
         $('.message-subject').click(async function (e) {
             let id = $(this).data().id;
             let fullMessage = await browser.messages.getFull(id);
@@ -42,7 +51,7 @@ async function start() {
                 str = fullMessage.parts[0].parts[1].body;
             }
             $('#msg').html(str);
-        });
+        });*/
     } else {
         $('#folders').hide();
         $('#messages-list').hide();
@@ -58,16 +67,24 @@ function fillTemplate(idTemplate, data, idElem) {
     $(`#${idElem}`).html(rendered);
 }
 
-async function listMessagesFromFolder(folder) {
+async function getGitMessagesFromFolder(folder) {
     let messages = new Array();
+    let res = new Array();
     let page = await browser.messages.list(folder);
     messages = page.messages;
     while (page.id) {
         page = await browser.messages.continueList(page.id);
         messages = messages.concat(page.messages);
     }
+    for (let msg of messages) {
+        let headers = await getHeaderFromIdMessage(msg.id);
+        let header = headers[0];
+        if (header.hasOwnProperty("x-github-recipient-address")) {
+            res.push(msg);
+        }
+    }
     return new Promise((resolve, reject) => {
-        resolve(messages);
+        resolve(res);
     });           
 }
 
@@ -79,4 +96,118 @@ async function getHeaderFromIdMessage(id) {
     return promise = new Promise((resolve, reject) => {
         resolve(tab);
     });
+}
+
+function getIdEvent(message) {    
+    let header = message.headerMessageId;
+    let index = header.indexOf("@github.com");
+    header = header.split('/');
+    if (index > -1 && header[2] == 'issues') {
+        return [header[3], header[1], header[2]];     //Numéro & repo & event
+    } else if (index > -1 && header[2] == 'pull') {
+        let id = header[3];
+        if (id.length > 1) {
+            id = id.slice(0,1);
+        }
+        return [id, header[1], header[2]]; 
+    } else {
+        return null;
+    }
+}
+
+function isThreaded(message) {    
+    let tabEvent = getIdEvent(message);
+    return tabEvent != null ? true : false;
+}
+
+function addToThreads(message) {    
+    let tabEvent = getIdEvent(message);
+    if (tabEvent != null) {
+        let idEvent = tabEvent[0];
+        let repo = tabEvent[1];
+        let event = tabEvent[2];
+        if (Threads.nbThreads != 0) {
+            for (let t in Threads) {
+                if (Threads[t].repo == repo && Threads[t].event == event && Threads[t].idEvent == idEvent) {
+                    return {
+                        idThread: parseInt(t),
+                        event: Threads[t].event,
+                        idEvent: Threads[t].idEvent,
+                        repo: Threads[t].repo,
+                    };
+                }
+            }
+            Threads[Threads.nbThreads] = {
+                repo: repo,
+                event: event,
+                idEvent: idEvent,
+                folderName: message.folder.name
+            }
+            Threads.nbThreads++;
+            return {
+                idThread: Threads.nbThreads - 1,
+                event: event,
+                idEvent: idEvent,
+                repo: repo,
+            };
+        } else {
+            Threads[0] = {
+                repo: repo,
+                event: event,
+                idEvent: idEvent,
+                folderName: message.folder.name
+            }
+            Threads.nbThreads++;
+            return {
+                idThread: Threads.nbThreads - 1,
+                event: event,
+                idEvent: idEvent,
+                repo: repo,
+            };
+        }        
+    } else {
+        return null;
+    }
+}
+
+function addToMails(idThread, data, message, tmpDate, folder) {
+    if (idThread == -1) { //Cas où c'est pas un thread
+        if (Mails[folder] == undefined) {
+            Mails[folder] = [];
+        }
+        Mails[folder].push({
+            data: data,
+            mails: [{
+                id: message.id,
+                subject: message.subject,
+                author: message.author,
+                date: tmpDate,
+            }],
+        });
+    } else { //Thread
+        if (Mails[Threads[idThread].folderName] == undefined) {
+            Mails[Threads[idThread].folderName] = [];
+        }
+        for (let m of Mails[Threads[idThread].folderName]) {
+            if (m.data.idThread == idThread) {
+                let newMail = {
+                    id: message.id,
+                    subject: message.subject,
+                    author: message.author,
+                    date: tmpDate,
+                }           
+                m.mails.push(newMail);
+                return;
+            }
+        }
+        Mails[Threads[idThread].folderName].push({
+            data: data,
+            mails: [{
+                id: message.id,
+                subject: message.subject,
+                author: message.author,
+                date: tmpDate,
+            }]
+        });
+    }    
 }
