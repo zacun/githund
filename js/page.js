@@ -12,10 +12,10 @@ async function start() {
         for (let folder of listFolders) {
             let messages = await getGitMessagesFromFolder(folder);
             for (let message of messages) {
+                let date = new Date(message.date);
+                let tmpDate = date.getDate() + '/' + date.getMonth()+1 + '/' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
                 if(isThreaded(message)) {
-                    let dataThread = addToThreads(message);
-                    let date = new Date(message.date);
-                    let tmpDate = date.getDate() + '/' + date.getMonth()+1 + '/' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+                    let dataThread = addToThreads(message);                    
                     let data = {
                         idThread: dataThread.idThread,
                         event: dataThread.event,
@@ -24,8 +24,6 @@ async function start() {
                     };
                     addToMails(dataThread.idThread, data, message, tmpDate, null);                    
                 } else {
-                    let date = new Date(message.date);
-                    let tmpDate = date.getDate() + '/' + date.getMonth()+1 + '/' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
                     let data = {
                         id: message.id,
                         subject: message.subject,
@@ -35,12 +33,10 @@ async function start() {
                     addToMails(-1, data, message, tmpDate, folder.name);
                 }
             }
-            foldersName.push(folder.name);
+            foldersName.push({ folderName: folder.name });
         }
-        console.log("Mails : ", Mails);
-        console.log("Threads : ",Threads);
-        /*fillTemplate("template-listFolders", foldersName, "folders ul");
-        fillTemplate("template-listMessages", Mails, "messages-list tbody");
+        fillTemplate("template-listFolders", foldersName, "folders ul");
+        /*fillTemplate("template-listMessages", Mails, "messages-list tbody");
         $('.message-subject').click(async function (e) {
             let id = $(this).data().id;
             let fullMessage = await browser.messages.getFull(id);
@@ -143,13 +139,6 @@ function addToThreads(message) {
                 idEvent: idEvent,
                 folderName: message.folder.name
             }
-            Threads.nbThreads++;
-            return {
-                idThread: Threads.nbThreads - 1,
-                event: event,
-                idEvent: idEvent,
-                repo: repo,
-            };
         } else {
             Threads[0] = {
                 repo: repo,
@@ -157,14 +146,14 @@ function addToThreads(message) {
                 idEvent: idEvent,
                 folderName: message.folder.name
             }
-            Threads.nbThreads++;
-            return {
-                idThread: Threads.nbThreads - 1,
-                event: event,
-                idEvent: idEvent,
-                repo: repo,
-            };
-        }        
+        }
+        Threads.nbThreads++;
+        return {
+            idThread: Threads.nbThreads - 1,
+            event: event,
+            idEvent: idEvent,
+            repo: repo,
+        };     
     } else {
         return null;
     }
