@@ -81,12 +81,7 @@ async function getGitMessagesFromFolder(folder) {
             res.push(msg);
         }
     }
-    return res;
-    /*
-    return new Promise((resolve, reject) => {
-        resolve(res);
-    });   
-    */        
+    return res;       
 }
 
 async function getHeaderFromIdMessage(id) {
@@ -95,11 +90,6 @@ async function getHeaderFromIdMessage(id) {
     let headers = messages.headers;
     tab.push(headers);
     return tab;
-    /*
-    return new Promise((resolve, reject) => {
-        resolve(tab);
-    });
-    */
 }
 
 function getIdEvent(message) {    
@@ -140,14 +130,6 @@ function addToThreads(message) {
                 // Thread already exist
                 if (Threads[t].repo == repo && Threads[t].event == event && Threads[t].eventId == eventId) {
                     return parseInt(t);
-                    /*
-                    return {
-                        threadId: parseInt(t),
-                        event: Threads[t].event,
-                        eventId: Threads[t].eventId,
-                        repo: Threads[t].repo,
-                    };
-                    */
                 }
             }
             // Thread does not exist
@@ -168,14 +150,6 @@ function addToThreads(message) {
         }
         Threads.nbThreads++;
         return Threads.nbThreads - 1
-        /*
-        return {
-            threadId: Threads.nbThreads - 1,
-            event: event,
-            eventId: eventId,
-            repo: repo,
-        };
-        */
     }
     return null;
 }
