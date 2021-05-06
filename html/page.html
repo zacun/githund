@@ -45,7 +45,7 @@
     </script>
     <script id="template-listMessages" type="x-tmpl-mustache">
         {{#.}}
-            <tr data-id={{id}} class="message-subject">
+            <tr data-id="{{id}}" data-folder="{{folder}}" class="message-subject">
                 <td>{{subject}}</td>
                 <td>{{author}}</td>
                 <td>{{date}}</td>

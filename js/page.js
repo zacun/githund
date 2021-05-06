@@ -36,7 +36,7 @@ async function start() {
             foldersName.push({ folderName: folder.name });
         }
         fillTemplate("template-listFolders", foldersName, "folders ul");
-        /*fillTemplate("template-listMessages", Mails, "messages-list tbody");
+        fillMailsTemplate();
         $('.message-subject').click(async function (e) {
             let id = $(this).data().id;
             let fullMessage = await browser.messages.getFull(id);
@@ -47,7 +47,7 @@ async function start() {
                 str = fullMessage.parts[0].parts[1].body;
             }
             $('#msg').html(str);
-        });*/
+        });
     } else {
         $('#folders').hide();
         $('#messages-list').hide();
@@ -61,6 +61,19 @@ function fillTemplate(idTemplate, data, idElem) {
     Mustache.parse(template);
     let rendered = Mustache.render(template, data);
     $(`#${idElem}`).html(rendered);
+}
+
+function fillMailsTemplate() {
+    let template = $(`#template-listMessages`).html();
+    Mustache.parse(template);
+    for (let folder in Mails) {
+        Mails[folder].forEach(thread => {
+            thread.mails.forEach(mail => {
+                let rendered = Mustache.render(template, {...mail, folder: folder});
+                $(`#messages-list tbody`).append(rendered);
+            });
+        });
+    }
 }
 
 async function getGitMessagesFromFolder(folder) {
