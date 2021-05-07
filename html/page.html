@@ -45,7 +45,7 @@
     </script>
     <script id="template-listMessages" type="x-tmpl-mustache">
         {{#.}}
-            <tr data-id="{{id}}" data-folder="{{folder}}" class="message-subject">
+            <tr data-id="{{id}}" data-folder="{{folder}}" data-threadid="{{threadid}}" class="message-subject">
                 <td>{{subject}}</td>
                 <td>{{author}}</td>
                 <td>{{date}}</td>
@@ -54,6 +54,14 @@
     </script>
     <script id="template-fullMessages" type="x-tmpl-mustache">
         {{{message}}}
+    </script>
+    <script id="template-thread" type="x-tmpl-mustache">
+            {{#.}}
+                <div class="thread">
+                    {{{.}}}
+                </div>
+            {{/.}}
+        </div>
     </script>
 </body>
 </html>

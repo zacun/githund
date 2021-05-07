@@ -1,12 +1,13 @@
 const Mails = {}; // Main object
-const Threads = {};
-Threads.nbThreads = 0;
+let Threads = new Object();
 
 let listFolders = [];
 
 start();
 
 async function start() {
+    let getThreadFolder = await browser.storage.local.get('threads');
+    getThreadFolder.threads === undefined ? Threads.nbThreads = 0 : Threads = getThreadFolder.threads;
     let getStorage = await browser.storage.local.get('folders');
     if (getStorage.folders !== undefined) {
         for (let folder of getStorage.folders) {
@@ -27,15 +28,21 @@ async function start() {
         fillTemplate("template-listFolders", getStorage.folders, "folders ul");
         fillMailsTemplate();
         $('.message-subject').click(async function (e) {
-            let id = $(this).data().id;
-            let fullMessage = await browser.messages.getFull(id);
-            let str;
-            if (fullMessage.parts[0].body != null) {
-                str = fullMessage.parts[0].body;
+            let threadId = $(this).data().threadid;
+            if (threadId == -1) {
+                let id = $(this).data().id;
+                let fullMessage = await browser.messages.getFull(id);
+                let str;
+                if (fullMessage.parts[0].body != null) {
+                    str = fullMessage.parts[0].body;
+                } else {
+                    str = fullMessage.parts[0].parts[1].body;
+                }
+                $('#msg').html(str);
             } else {
-                str = fullMessage.parts[0].parts[1].body;
+                let messages = await getMessagesFromThread(threadId);
+                fillTemplate("template-thread", messages, "msg");
             }
-            $('#msg').html(str);
         });
     } else {
         $('#folders').hide();
@@ -58,11 +65,36 @@ function fillMailsTemplate() {
     for (let folder in Mails) {
         Mails[folder].forEach(thread => {
             thread.mails.forEach(mail => {
-                let rendered = Mustache.render(template, {...mail, folder: folder});
+                let threadId;
+                thread.data ? threadId = thread.data.threadId : threadId = -1;
+                let rendered = Mustache.render(template, {...mail, folder: folder, threadid: threadId});
                 $(`#messages-list tbody`).append(rendered);
             });
         });
     }
+}
+
+async function getMessagesFromThread(threadId) {
+    let tmp = null;
+    let res = [];
+    for (let folder in Mails) {
+        Mails[folder].forEach(thread => {
+            if (thread.data && thread.data.threadId == threadId) {
+                tmp = thread.mails;
+            }
+        });
+    }
+    if (tmp != null) {
+        for (let msg of tmp) {
+            let fullMessage = await browser.messages.getFull(msg.id);
+            if (fullMessage.parts[0].body != null) {
+                res = res.concat(fullMessage.parts[0].body);
+            } else {
+                res = res.concat(fullMessage.parts[0].parts[1].body);
+            }
+        }
+    }
+    return res;
 }
 
 async function getGitMessagesFromFolder(folder) {
@@ -114,7 +146,7 @@ function isThreaded(message) {
     return tabEvent != null ? true : false;
 }
 
-function computeDate(_date) {
+function formateDate(_date) {
     let date = new Date(_date);
     return date.getDate() + '/' + date.getMonth()+1 + '/' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
 }
@@ -163,18 +195,24 @@ function addToMails(threadId, data, message, folder) {
                 id: message.id,
                 subject: message.subject,
                 author: message.author,
-                date: computeDate(message.date),
+                date: formateDate(message.date),
+                realDate: message.date,
+                folder: folder,
+                threadId: threadId,        
             }],
         });
     } else { // Belongs to a thread
         if (Mails[folder] == undefined) Mails[folder] = [];
         for (let thread of Mails[folder]) {
-            if (thread.data.threadId == threadId) {         
+            if (thread.data && thread.data.threadId == threadId) {         
                 thread.mails.push({
                     id: message.id,
                     subject: message.subject,
                     author: message.author,
-                    date: computeDate(message.date),
+                    date: formateDate(message.date),
+                    realDate: message.date,
+                    folder: folder,
+                    threadId: threadId,  
                 });
                 return;
             }
@@ -185,7 +223,10 @@ function addToMails(threadId, data, message, folder) {
                 id: message.id,
                 subject: message.subject,
                 author: message.author,
-                date: computeDate(message.date),
+                date: formateDate(message.date),
+                realDate: message.date,
+                folder: folder,
+                threadId: threadId,  
             }]
         });
     }    
