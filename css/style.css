@@ -72,7 +72,9 @@ th {
 .message-subject:hover {
     background-color: rgba(0, 0, 0, 0.2);
 }
-
+.th-date {
+    cursor: pointer;
+}
 /**
 * Messages content list panel
 */

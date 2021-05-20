@@ -19,12 +19,12 @@
         </section>
         <div id="messages">
             <section id="messages-list">
-                <table>
+                <table class="table">
                     <thead>
                         <tr>
                             <th>Subject</th>
                             <th>Correspondents</th>
-                            <th>Date</th>
+                            <th class="th-date">Date</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -48,7 +48,7 @@
             <tr data-id="{{id}}" data-folder="{{folder}}" data-threadid="{{threadid}}" class="message-subject">
                 <td>{{subject}}</td>
                 <td>{{author}}</td>
-                <td>{{date}}</td>
+                <td>{{realdate}}</td>
             </tr>
         {{/.}}
     </script>
