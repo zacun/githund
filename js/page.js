@@ -21,10 +21,9 @@ async function start() {
                         repo: Threads[threadId].repo,
                     };
                     addToMails(threadId, data, message, folder.name);
-                }
+                } else addToMails(-1, null, message, folder.name);
             }
         }
-        console.log("Mails : ", Mails);
         fillTemplate("template-listFolders", getStorage.folders, "folders ul");
         fillMailsTemplate();
         $('.message-subject').click(async function (e) {
@@ -45,16 +44,25 @@ async function start() {
             }
         });
         $('.th-date').click(function (e) {
-            Threads.sort((a,b) => {            
-                if (a.realDate < b.realDate) {
-                    return 1;
-                } else {
-                    return 0;
-                }                        
-            });
-            
-            $(".table tbody tr").remove();
-            fillMailsTemplate();
+            if ($(this).data().sort == "0") {
+                Threads.sort((a,b) => {
+                    if (a.realDate < b.realDate) return 1;
+                    else if (a.realDate > b.realDate) return -1;
+                    else return 0;
+                });
+                $(".table tbody tr").remove();
+                fillMailsTemplate();
+                $(this).data("sort", "1");
+            } else {
+                Threads.sort((a,b) => {
+                    if (a.realDate < b.realDate) return -1;
+                    else if (a.realDate > b.realDate) return 1;
+                    else return 0;
+                });
+                $(".table tbody tr").remove();
+                fillMailsTemplate();
+                $(this).data("sort", "0");
+            }
         });
     } else {
         $('#folders').hide();
@@ -75,19 +83,15 @@ function fillMailsTemplate() {
     let firstMsg = [];
     let template = $(`#template-listMessages`).html();
     Mustache.parse(template);
-    for (let folder in Mails) {
-        for (let thread in Mails[folder]) {
-            Mails[folder][thread].mails.forEach(mail => {
-                let threadId;
-                threadId = Mails[folder][thread].data.threadId;
-                if (!firstMsg.includes(threadId)) {
-                    let realDate = formateDate(Mails[folder][thread].data.date);
-                    let rendered = Mustache.render(template, {...mail, folder: folder, threadid: threadId, realdate: realDate});
-                    $(`#messages-list tbody`).append(rendered);
-                    firstMsg.push(threadId);
-                }
-            });
-        };
+    for (let thread of Threads) {        
+        Mails[thread.folderName][thread.threadId].mails.forEach(mail => {
+            if (!firstMsg.includes(thread.threadId)) {
+                let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);
+                let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate});
+                $(`#messages-list tbody`).append(rendered);
+                firstMsg.push(thread.threadId);
+            }
+        });
     }
 }
 
@@ -178,6 +182,9 @@ function addToThreads(message) {
             for (let t of Threads) {
                 // Thread already exist
                 if (t.repo == repo && t.event == event && t.eventId == eventId) {
+                    if (message.date > t.realDate) {
+                        t.realDate = message.date;
+                    }
                     return parseInt(t.threadId);
                 }
             }
@@ -207,13 +214,31 @@ function addToThreads(message) {
 }
 
 function addToMails(threadId, data, message, folder) {
-    if (Mails[folder] == undefined) Mails[folder] = {};
-    for (let thread in Mails[folder]) {
-        if (thread == threadId) {     
-            if (message.date > Mails[folder][thread].data.date) {
-                Mails[folder][thread].data.date = message.date;
-            }    
-            Mails[folder][thread].mails.push({
+    if (threadId > -1) {
+        if (Mails[folder] == undefined) Mails[folder] = {};
+        for (let thread in Mails[folder]) {
+            if (thread == threadId) {     
+                if (message.date > Mails[folder][thread].data.date) {
+                    Mails[folder][thread].data.date = message.date;
+                }    
+                Mails[folder][thread].mails.unshift({
+                    id: message.id,
+                    subject: message.subject,
+                    author: message.author,
+                    date: formateDate(message.date),
+                    realDate: message.date,
+                    folder: folder,
+                    threadId: threadId,  
+                });
+                return;
+            }
+        }
+        Mails[folder][threadId] = {
+            data: {
+                ...data,
+                date: message.date
+            },
+            mails: [{
                 id: message.id,
                 subject: message.subject,
                 author: message.author,
@@ -221,23 +246,7 @@ function addToMails(threadId, data, message, folder) {
                 realDate: message.date,
                 folder: folder,
                 threadId: threadId,  
-            });
-            return;
-        }
-    }
-    Mails[folder][threadId] = {
-        data: {
-            ...data,
-            date: message.date
-        },
-        mails: [{
-            id: message.id,
-            subject: message.subject,
-            author: message.author,
-            date: formateDate(message.date),
-            realDate: message.date,
-            folder: folder,
-            threadId: threadId,  
-        }]
-    };   
+            }]
+        };
+    }   
 }
