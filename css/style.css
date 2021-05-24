@@ -31,7 +31,7 @@ ul {
     flex: 1;
 }
 
-.thread {
+.msg {
     border: 1px solid;
     margin-bottom: 1em;
 }
@@ -74,6 +74,13 @@ th {
 }
 .th-date {
     cursor: pointer;
+}
+.form {
+    display: none;
+    position: absolute;
+    left:50%;
+    top: 25%;
+    z-index: 1;
 }
 /**
 * Messages content list panel

@@ -1,6 +1,5 @@
 const Mails = {}; // Main object
 let Threads = [];
-let listFolders = [];
 
 start();
 
@@ -26,22 +25,27 @@ async function start() {
         }
         fillTemplate("template-listFolders", getStorage.folders, "folders ul");
         fillMailsTemplate();
-        $('.message-subject').click(async function (e) {
+        $(document).on('click','.message-subject', async function(){
             let threadId = $(this).data().threadid;
-            if (threadId == -1) {
-                let id = $(this).data().id;
-                let fullMessage = await browser.messages.getFull(id);
-                let str;
-                if (fullMessage.parts[0].body != null) {
-                    str = fullMessage.parts[0].body;
-                } else {
-                    str = fullMessage.parts[0].parts[1].body;
-                }
-                $('#msg').html(str);
-            } else {
-                let messages = await getMessagesFromThread(threadId);
-                fillTemplate("template-thread", messages, "msg");
-            }
+            let folder = $(this).data().folder;
+            let messages = await getMessagesFromThread(threadId, folder);
+            fillTemplate("template-thread", messages, "thread");
+            let owner = Threads[threadId].owner;
+            let repo = Threads[threadId].repo;
+            let event = Threads[threadId].event;
+            let eventId = Threads[threadId].eventId;
+            $('#message-info #unsubscribe').click(async (e) => {
+                let id = Mails[folder][threadId].mails[0].id;
+                let link = await getLinkFromMessage(id);
+                let mail = `${link}?subject=Unsubscribe ${event} ${eventId} from repository ${repo}`;
+                window.location = mail;
+            });
+            $('#message-info #close').click((e) => {                
+                closeEvent(owner, repo, event, eventId);
+            });
+            $('#message-info #open').click((e) => {
+                openEvent(owner, repo, event, eventId);
+            });
         });
         $('.th-date').click(function (e) {
             if ($(this).data().sort == "0") {
@@ -95,14 +99,20 @@ function fillMailsTemplate() {
     }
 }
 
-async function getMessagesFromThread(threadId) {
+async function getLinkFromMessage(id) {
+    let headers = await getHeaderFromIdMessage(id);
+    let fullLink = headers[0]["list-unsubscribe"][0];
+    fullLink = fullLink.split(",")[0];
+    let link = fullLink.slice(1, fullLink.length-1);
+    return link;
+}
+
+async function getMessagesFromThread(threadId, folder) {
     let tmp = null;
     let res = [];
-    for (let folder in Mails) {
-        for (let thread in Mails[folder]) {
-            if (Mails[folder][thread].data && Mails[folder][thread].data.threadId == threadId) {
-                tmp = Mails[folder][thread].mails;
-            }
+    for (let thread in Mails[folder]) {
+        if (Mails[folder][thread].data && Mails[folder][thread].data.threadId == threadId) {
+            tmp = Mails[folder][thread].mails;
         }
     }
     if (tmp != null) {
@@ -150,16 +160,44 @@ function getIdEvent(message) {
     let index = header.indexOf("@github.com");
     header = header.split('/');
     if (index > -1 && header[2] == 'issues') {
-        return [header[3], header[1], header[2]]; // number & repo & event
+        return [header[3], header[1], header[2], header[0]]; // number & repo & event
     } 
     if (index > -1 && header[2] == 'pull') {
         let id = header[3];
         if (id.length > 1) {
             id = id.slice(0,1);
         }
-        return [id, header[1], header[2]]; 
+        return [id, header[1], header[2]+"s", header[0]]; 
     }
     return null;
+}
+
+function closeEvent(owner, repo, event, eventId) {
+    fetch(`https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`, {
+        method: "PATCH",
+        headers: { Authorization: "token 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" },
+        body: JSON.stringify({ state: "closed" }),
+    })
+    .then((response) => {
+        console.log(response);
+    })
+    .catch((error) => {
+        console.log("Erreur : ", error);
+    });
+}
+
+function openEvent(owner, repo, event, eventId) {
+    fetch(`https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`, {
+        method: "PATCH",
+        headers: { Authorization: "token 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" },
+        body: JSON.stringify({ state: "open" }),
+    })
+    .then((response) => {
+        console.log(response);
+    })
+    .catch((error) => {
+        console.log("Erreur : ", error);
+    });
 }
 
 function isThreaded(message) {    
@@ -178,6 +216,7 @@ function addToThreads(message) {
         let eventId = tabEvent[0];
         let repo = tabEvent[1];
         let event = tabEvent[2];
+        let owner = tabEvent[3];
         if (Threads.length > 0) {
             for (let t of Threads) {
                 // Thread already exist
@@ -195,7 +234,8 @@ function addToThreads(message) {
                 eventId: eventId,
                 folderName: message.folder.name,
                 realDate: message.date,
-                threadId: Threads.length
+                threadId: Threads.length,
+                owner: owner
             });
         } else {
             // No threads yet
@@ -205,7 +245,8 @@ function addToThreads(message) {
                 eventId: eventId,
                 folderName: message.folder.name,
                 realDate: message.date,
-                threadId: 0
+                threadId: 0,
+                owner: owner
             };
         }
         return Threads.length-1;

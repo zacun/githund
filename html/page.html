@@ -5,8 +5,8 @@
     <title>Githund</title>
     <link rel="stylesheet" href="../css/style.css">
     <script src="../utilities/jquery-3.6.0.min.js" type="module"></script>
-    <script src="../utilities/mustache.min.js" type="module"></script>    
-    <script src="../js/page.js"></script>  
+    <script src="../utilities/mustache.min.js" type="module"></script>
+    <script src="../js/page.js"></script>
 </head>
 <body>
     <div id="error">
@@ -31,8 +31,7 @@
                 </table>
             </section>
             <section id="messages-content">
-                <div id="message-info"></div>
-                <div id="msg"></div>
+                <div id="thread"></div>
             </section>
         </div>
     </div>
@@ -56,12 +55,16 @@
         {{{message}}}
     </script>
     <script id="template-thread" type="x-tmpl-mustache">
-            {{#.}}
-                <div class="thread">
-                    {{{.}}}
-                </div>
-            {{/.}}
+        <div id="message-info">
+            <button id="unsubscribe">Unsubscribe</button>
+            <button id="open">Open ticket</button>
+            <button id="close">Close ticket</button><br>
         </div>
+        {{#.}}
+            <div class="msg">
+                {{{.}}}
+            </div>
+        {{/.}}
     </script>
 </body>
 </html>
