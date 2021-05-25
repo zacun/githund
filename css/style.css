@@ -88,6 +88,9 @@ th {
 #messages-content {
     flex: 1;
 }
+#messages-content #message-info {
+    display: none;
+}
 /*
 #msg {
     white-space: pre-wrap;

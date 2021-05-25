@@ -26,17 +26,22 @@ async function start() {
         fillTemplate("template-listFolders", getStorage.folders, "folders ul");
         fillMailsTemplate();
         $(document).on('click','.message-subject', async function(){
+            $('#message-info').show();
             let threadId = $(this).data().threadid;
             let folder = $(this).data().folder;
             let messages = await getMessagesFromThread(threadId, folder);
-            fillTemplate("template-thread", messages, "thread");
+            let ids = [];
+            Mails[folder][threadId].mails.forEach(messages => {
+                ids.push(messages.id);
+            });
+            fillTemplate("template-thread", messages, "thread", ids);
             let owner = Threads[threadId].owner;
             let repo = Threads[threadId].repo;
             let event = Threads[threadId].event;
             let eventId = Threads[threadId].eventId;
             $('#message-info #unsubscribe').click(async (e) => {
                 let id = Mails[folder][threadId].mails[0].id;
-                let link = await getLinkFromMessage(id);
+                let link = await getUnsubscribeLinkFromMessage(id);
                 let mail = `${link}?subject=Unsubscribe ${event} ${eventId} from repository ${repo}`;
                 window.location = mail;
             });
@@ -45,6 +50,27 @@ async function start() {
             });
             $('#message-info #open').click((e) => {
                 openEvent(owner, repo, event, eventId);
+            });
+            $('#message-info #visit').click(async (e) => {
+                browser.windows.openDefaultBrowser(`https://github.com/${owner}/${repo}/${event}/${eventId}`);
+            });
+            $('#message-info #delete-all').click((e) => {                
+                browser.messages.delete(ids);                
+                this.parentElement.removeChild(this);
+                let threadMsg = $('#messages-content #thread')[0].children;
+                while(threadMsg.length > 0) {
+                    threadMsg[0].remove();
+                 }
+            });
+            $('#thread #msg #delete-one').click((e) => {                
+                let id = parseInt(e.currentTarget.attributes["data-id"].value);
+                browser.messages.delete([id]);
+                let threadMsg = $('#messages-content #thread')[0].children;
+                for (let i=0; i<threadMsg.length; i++) {
+                    if (threadMsg[i].attributes["data-id"].value == id) {
+                        threadMsg[i].remove();
+                    }
+                }
             });
         });
         $('.th-date').click(function (e) {
@@ -76,11 +102,21 @@ async function start() {
     }
 }
 
-function fillTemplate(idTemplate, data, idElem) {
+function fillTemplate(idTemplate, data, idElem, idMsg) {
     let template = $(`#${idTemplate}`).html();
     Mustache.parse(template);
-    let rendered = Mustache.render(template, data);
-    $(`#${idElem}`).html(rendered);
+    let rendered;
+    if (idMsg === undefined) {
+        rendered = Mustache.render(template, data);
+        $(`#${idElem}`).html(rendered);
+    } else {
+        let res = [];
+        for (let i=0; i<data.length; i++) {
+            rendered = Mustache.render(template, {msg: data[i], id: idMsg[i]});
+            res.push(rendered);
+        }        
+        $(`#${idElem}`).html(res);
+    }    
 }
 
 function fillMailsTemplate() {
@@ -99,7 +135,11 @@ function fillMailsTemplate() {
     }
 }
 
-async function getLinkFromMessage(id) {
+async function getVisitLinkFromMessage(id) {
+    let headers = await getHeaderFromIdMessage(id);
+}
+
+async function getUnsubscribeLinkFromMessage(id) {
     let headers = await getHeaderFromIdMessage(id);
     let fullLink = headers[0]["list-unsubscribe"][0];
     fullLink = fullLink.split(",")[0];
@@ -149,7 +189,7 @@ async function getGitMessagesFromFolder(folder) {
 
 async function getHeaderFromIdMessage(id) {
     let tab = [];
-    let messages = await browser.messages.getFull(id);        
+    let messages = await browser.messages.getFull(id);
     let headers = messages.headers;
     tab.push(headers);
     return tab;
@@ -167,13 +207,13 @@ function getIdEvent(message) {
         if (id.length > 1) {
             id = id.slice(0,1);
         }
-        return [id, header[1], header[2]+"s", header[0]]; 
+        return [id, header[1], header[2], header[0]]; 
     }
     return null;
 }
 
 function closeEvent(owner, repo, event, eventId) {
-    fetch(`https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`, {
+    fetch(`https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`, {
         method: "PATCH",
         headers: { Authorization: "token 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" },
         body: JSON.stringify({ state: "closed" }),
@@ -187,7 +227,7 @@ function closeEvent(owner, repo, event, eventId) {
 }
 
 function openEvent(owner, repo, event, eventId) {
-    fetch(`https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`, {
+    fetch(`https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`, {
         method: "PATCH",
         headers: { Authorization: "token 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" },
         body: JSON.stringify({ state: "open" }),

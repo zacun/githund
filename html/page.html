@@ -31,6 +31,13 @@
                 </table>
             </section>
             <section id="messages-content">
+                <div id="message-info">
+                    <button id="unsubscribe">Unsubscribe</button>
+                    <button id="open">Open ticket</button>
+                    <button id="close">Close ticket</button>
+                    <button id="visit">Open in Github</button>
+                    <button id="delete-all">Delete the thread</button><br>
+                </div>
                 <div id="thread"></div>
             </section>
         </div>
@@ -55,14 +62,10 @@
         {{{message}}}
     </script>
     <script id="template-thread" type="x-tmpl-mustache">
-        <div id="message-info">
-            <button id="unsubscribe">Unsubscribe</button>
-            <button id="open">Open ticket</button>
-            <button id="close">Close ticket</button><br>
-        </div>
         {{#.}}
-            <div class="msg">
-                {{{.}}}
+            <div class="msg" id="msg" data-id={{id}}>
+            <button id="delete-one" data-id={{id}}>Delete this message</button>            
+                {{{msg}}}
             </div>
         {{/.}}
     </script>
