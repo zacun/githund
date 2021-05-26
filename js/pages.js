@@ -24,7 +24,7 @@ async function getMessagesFromThread(threadId, folder) {
 }
 
 async function getUnsubscribeLinkFromMessage(id) {
-    let headers = await getHeaderFromIdMessage(id);
+    let headers = await getHeaderFromMessageId(id);
     let fullLink = headers[0]["list-unsubscribe"][0];
     fullLink = fullLink.split(",")[0];
     let link = fullLink.slice(1, fullLink.length-1);
@@ -32,7 +32,7 @@ async function getUnsubscribeLinkFromMessage(id) {
 }
 
 // Return thread infos object from Thread
-function getThreadInfos(threadId) {
+function getThreadInfos(threadId) {    
     for (let thread of Threads) {
         if (thread.threadId == threadId) return thread;
     }
@@ -109,7 +109,7 @@ clickEventTemplate(".thread-summary", async (e) => {
     let folder = e.currentTarget.attributes["data-folder"].value;
     let messages = await getMessagesFromThread(threadId, folder);
     fillTemplate("template-thread-actions", {
-        threadId: threadId,
+        threadid: threadId,
         folder: folder,
         author: Mails[folder][threadId].mails[0].author,
         subject: Mails[folder][threadId].mails[0].subject,
@@ -155,14 +155,14 @@ clickEventTemplate("#delete-thread", async (e) => {
     let folder = $("#thread-infos").data().folder;
     let messagesId = [];
     for (let mail of Mails[folder][threadId].mails) {
-        messagesId.push(mail);
+        messagesId.push(mail.id);
     }
     // Delete mails from thunderbird (go to trash bin)
     await browser.messages.delete(messagesId);
     // Remove associated elements from DOM
     let threadsList = Array.from(document.querySelectorAll(".thread-summary"));
-    threadsList.forEach((el) => {
-        el.remove();
+    threadsList.forEach((el) => {        
+        if (el.attributes["data-threadid"].value == threadId) el.remove();        
     });
     document.getElementById("thread-messages-container").remove();
     document.getElementById("thread-infos").remove();
@@ -197,14 +197,14 @@ clickEventTemplate("#archive-thread", async (e) => {
     let folder = $("#thread-infos").data().folder;
     let messagesId = [];
     for (let mail of Mails[folder][threadId].mails) {
-        messagesId.push(mail);
+        messagesId.push(mail.id);
     }
     // Delete mails from thunderbird
     await browser.messages.archive(messagesId);
     // Remove associated elements from DOM
     let threadsList = Array.from(document.querySelectorAll(".thread-summary"));
     threadsList.forEach((el) => {
-        el.remove();
+        if (el.attributes["data-threadid"].value == threadId) el.remove(); 
     });
     document.getElementById("thread-messages-container").remove();
     document.getElementById("thread-infos").remove();
