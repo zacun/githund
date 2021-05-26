@@ -36,16 +36,18 @@ async function start() {
         }        
         fillTemplate("template-listFolders", getStorage.folders, "folders ul");
         fillMailsTemplate();
-        $(document).on('click','.message-subject', async function(){
-            $('#message-info').show();
+        $(document).on('click','.thread-summary', async function(){
             let threadId = $(this).data().threadid;
             let folder = $(this).data().folder;
             let messages = await getMessagesFromThread(threadId, folder);
-            let ids = []; //Store message id from clicked thread
-            Mails[folder][threadId].mails.forEach(mail => {
-                ids.push(mail.id);
-            });
-            fillTemplate("template-thread", messages, "thread", ids);
+            fillTemplate("template-thread-actions", {
+                threadId: threadId,
+                folder: folder,
+                author: Mails[folder][threadId].mails[0].author,
+                subject: Mails[folder][threadId].mails[0].subject,
+                date: formateDate(Mails[folder][threadId].data.date)
+            }, "thread-actions");
+            fillTemplate("template-thread-messages", messages, "thread-messages-content");
             let owner = Threads[threadId].owner;
             let repo = Threads[threadId].repo;
             let event = Threads[threadId].event;
@@ -116,40 +118,28 @@ async function start() {
             }
         });
     } else {
-        $('#folders').hide();
-        $('#messages-list').hide();
-        $('#messages-content').hide();
-        $('#error').show();
+        $("#main").hide();
+        $("#error").show();
     }
 }
 
-function fillTemplate(idTemplate, data, idElem, idMsg) {
-    let template = $(`#${idTemplate}`).html();
+function fillTemplate(templateId, data, elemId) {
+    let template = $(`#${templateId}`).html();
     Mustache.parse(template);
-    let rendered;
-    if (idMsg === undefined) {
-        rendered = Mustache.render(template, data);
-        $(`#${idElem}`).html(rendered);
-    } else {
-        let res = [];
-        for (let i=0; i<data.length; i++) {
-            rendered = Mustache.render(template, {msg: data[i], id: idMsg[i]});
-            res.push(rendered);
-        }        
-        $(`#${idElem}`).html(res);
-    }    
+    let rendered = Mustache.render(template, data);
+    $(`#${elemId}`).html(rendered);
 }
 
 function fillMailsTemplate() {
     let firstMsg = [];
-    let template = $(`#template-listMessages`).html();
+    let template = $(`#template-threadsList`).html();
     Mustache.parse(template);
-    for (let thread of Threads) {        
+    for (let thread of Threads) {
         Mails[thread.folderName][thread.threadId].mails.forEach(mail => {
             if (!firstMsg.includes(thread.threadId)) {
                 let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);
                 let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate});
-                $(`#messages-list tbody`).append(rendered);
+                $(`#threads-list tbody`).append(rendered);
                 firstMsg.push(thread.threadId);
             }
         });
@@ -165,21 +155,19 @@ async function getUnsubscribeLinkFromMessage(id) {
 }
 
 async function getMessagesFromThread(threadId, folder) {
-    let tmp = null;
+    let tmp = Mails[folder][threadId].mails;
     let res = [];
-    for (let thread in Mails[folder]) {
-        if (Mails[folder][thread].data && Mails[folder][thread].data.threadId == threadId) {
-            tmp = Mails[folder][thread].mails;
-        }
-    }
     if (tmp != null) {
         for (let msg of tmp) {
             let fullMessage = await browser.messages.getFull(msg.id);
-            if (fullMessage.parts[0].body != null) {
-                res = res.concat(fullMessage.parts[0].body);
-            } else {
-                res = res.concat(fullMessage.parts[0].parts[1].body);
-            }
+            let data = {
+                id: msg.id,
+                author: (msg.author).split(" ")[0],
+                date: msg.date,
+            };
+            if (fullMessage.parts[0].body != null) data.content = fullMessage.parts[0].body;
+            else data.content = fullMessage.parts[0].parts[1].body;
+            res.push(data);
         }
     }
     return res;
