@@ -1,9 +1,20 @@
 const Mails = {}; // Main object
-let Threads = [];
+const Threads = [];
+let token;
 
 start();
 
 async function start() {
+    let getToken = await browser.storage.local.get('token');
+    if (getToken.token !== undefined) {
+        token = getToken.token;
+    } else {
+        token = prompt("Please enter your generated Github token");
+        while (token == null || token == '') {
+            token = prompt("Please enter your valid generated Github token");
+        }
+        browser.storage.local.set({token: token});
+    }
     let getThreadFolder = await browser.storage.local.get('threads');
     if (getThreadFolder.threads !== undefined) Threads = getThreadFolder.threads;
     let getStorage = await browser.storage.local.get('folders');
@@ -12,7 +23,7 @@ async function start() {
             let messages = await getGitMessagesFromFolder(folder);
             for (let message of messages) {
                 if (isThreaded(message)) {
-                    let threadId = addToThreads(message);
+                    let threadId = addToThreads(message);                    
                     let data = {
                         threadId: threadId,
                         eventId: Threads[threadId].eventId,
@@ -22,7 +33,7 @@ async function start() {
                     addToMails(threadId, data, message, folder.name);
                 } else addToMails(-1, null, message, folder.name);
             }
-        }
+        }        
         fillTemplate("template-listFolders", getStorage.folders, "folders ul");
         fillMailsTemplate();
         $(document).on('click','.message-subject', async function(){
@@ -30,9 +41,9 @@ async function start() {
             let threadId = $(this).data().threadid;
             let folder = $(this).data().folder;
             let messages = await getMessagesFromThread(threadId, folder);
-            let ids = [];
-            Mails[folder][threadId].mails.forEach(messages => {
-                ids.push(messages.id);
+            let ids = []; //Store message id from clicked thread
+            Mails[folder][threadId].mails.forEach(mail => {
+                ids.push(mail.id);
             });
             fillTemplate("template-thread", messages, "thread", ids);
             let owner = Threads[threadId].owner;
@@ -60,7 +71,8 @@ async function start() {
                 let threadMsg = $('#messages-content #thread')[0].children;
                 while(threadMsg.length > 0) {
                     threadMsg[0].remove();
-                 }
+                }
+                $('#message-info').hide();
             });
             $('#thread #msg #delete-one').click((e) => {                
                 let id = parseInt(e.currentTarget.attributes["data-id"].value);
@@ -71,6 +83,15 @@ async function start() {
                         threadMsg[i].remove();
                     }
                 }
+            });
+            $('#message-info #archive-all').click((e) => {
+                browser.messages.archive(ids);
+                this.parentElement.removeChild(this);
+                let threadMsg = $('#messages-content #thread')[0].children;
+                while(threadMsg.length > 0) {
+                    threadMsg[0].remove();
+                }
+                $('#message-info').hide();
             });
         });
         $('.th-date').click(function (e) {
@@ -133,10 +154,6 @@ function fillMailsTemplate() {
             }
         });
     }
-}
-
-async function getVisitLinkFromMessage(id) {
-    let headers = await getHeaderFromIdMessage(id);
 }
 
 async function getUnsubscribeLinkFromMessage(id) {
@@ -212,10 +229,27 @@ function getIdEvent(message) {
     return null;
 }
 
+async function getState(owner, repo, event, eventId) {
+    let url;
+    event == "pull" ? url = `https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}` : url = `https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`;
+    let response = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: "token "+token, Accept: "application/vnd.github.v3+json" },
+    });
+    if (!response.ok) {
+        throw new Error("Error : ", response.status);
+    }
+    let data = await response.json();
+    let merged = data.merged === undefined ? false : data.merged;
+    return [data.state, merged];
+}
+
 function closeEvent(owner, repo, event, eventId) {
-    fetch(`https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`, {
+    let url;
+    event == "pull" ? url = `https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}` : `https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`;
+    fetch(url, {
         method: "PATCH",
-        headers: { Authorization: "token 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" },
+        headers: { Authorization: "token "+token },
         body: JSON.stringify({ state: "closed" }),
     })
     .then((response) => {
@@ -227,9 +261,11 @@ function closeEvent(owner, repo, event, eventId) {
 }
 
 function openEvent(owner, repo, event, eventId) {
-    fetch(`https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`, {
+    let url;
+    event == "pull" ? url = `https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}` : `https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`;
+    fetch(url, {
         method: "PATCH",
-        headers: { Authorization: "token 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" },
+        headers: { Authorization: "token "+token },
         body: JSON.stringify({ state: "open" }),
     })
     .then((response) => {

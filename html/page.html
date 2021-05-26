@@ -36,7 +36,8 @@
                     <button id="open">Open ticket</button>
                     <button id="close">Close ticket</button>
                     <button id="visit">Open in Github</button>
-                    <button id="delete-all">Delete the thread</button><br>
+                    <button id="delete-all">Delete the thread</button>
+                    <button id="archive-all">Archive the thread</button><br>
                 </div>
                 <div id="thread"></div>
             </section>
@@ -58,13 +59,10 @@
             </tr>
         {{/.}}
     </script>
-    <script id="template-fullMessages" type="x-tmpl-mustache">
-        {{{message}}}
-    </script>
     <script id="template-thread" type="x-tmpl-mustache">
         {{#.}}
             <div class="msg" id="msg" data-id={{id}}>
-            <button id="delete-one" data-id={{id}}>Delete this message</button>            
+            <button id="delete-one" data-id={{id}}>Delete this message</button>
                 {{{msg}}}
             </div>
         {{/.}}
