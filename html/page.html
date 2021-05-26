@@ -9,36 +9,60 @@
     <script src="../js/page.js"></script>
 </head>
 <body>
-    <div id="error">
+    <div id="error" class="off">
         <h1>No folders were selected</h1>
     </div>
     <div id="main">
-        <section id="folders">
-            <h2>Folders</h2>
-            <ul></ul>
+        <section id="left-panel">
+            <div id=left-panel-content>
+                <div id="refresh">
+                    <button class="light-button big padding-small">Refresh Mails &#10227;</button>
+                </div>
+                <div id="search">
+                    <h2>Search</h2>
+                    <div>
+                        <input type="text" id="search-input" name="seach-input" class="light-input" placeholder="&#x1F50D; repository or author" />
+                    </div>
+                </div>
+                <div id="folders">
+                    <h2>Folders</h2>
+                    <ul></ul>
+                </div>
+                <div id="light-dark-mode">
+                    <button id="switch-light-dark" class="light-button small">Switch to Dark Mode</button>
+                </div>
+            </div>
+            <div id="left-panel-resize"></div>
         </section>
-        <div id="messages">
-            <section id="messages-list">
+        <div id="threads-panel">
+            <section id="threads-list">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Subject</th>
-                            <th>Correspondents</th>
-                            <th class="th-date" data-sort="0">Date</th>
+                            <th id="th-state">
+                                <span>State</span>
+                                <span id="state-resize"></span>
+                            </th>
+                            <th id="th-subject">
+                                <span>Subject</span>
+                                <span id="subject-resize"></span>
+                            </th>
+                            <th id="th-correspondent">
+                                <span>Correspondents</span>
+                                <span id="correspondent-resize"></span>
+                            </th>
+                            <th id="th-date" class="th-date" data-sort="0">
+                                <span>Date</span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </section>
-            <section id="messages-content">
-                <div id="message-info">
-                    <button id="unsubscribe">Unsubscribe</button>
-                    <button id="open">Open ticket</button>
-                    <button id="close">Close ticket</button>
-                    <button id="visit">Open in Github</button>
-                    <button id="delete-all">Delete the thread</button><br>
-                </div>
-                <div id="thread"></div>
+            <section id="thread-content">
+                <div id="thread-content-resize"></div>
+                <div id="thread-actions" class="light-background"></div>
+                <div id="thread-messages-content" class="lighter-background"></div>
             </section>
         </div>
     </div>
@@ -49,25 +73,52 @@
             <li class="folder-name">{{name}}</li>
         {{/.}}
     </script>
-    <script id="template-listMessages" type="x-tmpl-mustache">
+    <script id="template-threadsList" type="x-tmpl-mustache">
         {{#.}}
-            <tr data-id="{{id}}" data-folder="{{folder}}" data-threadid="{{threadid}}" class="message-subject">
+            <tr data-id="{{id}}" data-folder="{{folder}}" data-threadid="{{threadid}}" class="thread-summary">
+                <td></td>
                 <td>{{subject}}</td>
                 <td>{{author}}</td>
                 <td>{{realdate}}</td>
             </tr>
         {{/.}}
     </script>
-    <script id="template-fullMessages" type="x-tmpl-mustache">
-        {{{message}}}
+    <script id="template-thread-actions" type="x-tmpl-mustache">
+        <div id="thread-infos" data-threadid="{{threadid}}" data-folder="{{folder}}">
+            <div>
+                <span>From</span> {{author}}
+            </div>
+            <div>
+                <span>Subject</span> {{subject}}
+            </div>
+            <div>
+                <span>Date</span> {{date}}
+            </div>
+        </div>
+        <div id="thread-buttons">
+            <button id="unsubscribe" class="light-button padding-small">Unsubscribe</button>
+            <button id="open" class="light-button padding-small">Open ticket</button>
+            <button id="close" class="light-button padding-small">Close ticket</button>
+            <button id="visit" class="light-button padding-small">Go to Github</button>
+            <button id="archive-thread" class="light-button padding-small">Archive thread</button>
+            <button id="delete-all" class="light-button padding-small">Delete thread</button>
+        </div>
     </script>
-    <script id="template-thread" type="x-tmpl-mustache">
+    <script id="template-thread-messages" type="x-tmpl-mustache">
         {{#.}}
-            <div class="msg" id="msg" data-id={{id}}>
-            <button id="delete-one" data-id={{id}}>Delete this message</button>            
-                {{{msg}}}
+            <div class="msg" data-id="{{id}}">
+                <div class="msg-header light-background">
+                    <div>{{author}}, {{date}}</div>
+                    <div><button class="light-button small" data-id="{{id}}">Delete mail</button></div>
+                </div>
+                <div class="msg-content">
+                    {{{content}}}
+                </div>
             </div>
         {{/.}}
     </script>
+
+    <!-- Scripts -->
+    <script src="../js/ui-script.js"></script>
 </body>
 </html>
