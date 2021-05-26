@@ -45,22 +45,21 @@ new Resize(document.getElementById("th-state"), document.getElementById("state-r
 const Search = {
     init: function () {
         this.threads = Array.from(document.getElementsByClassName("thread-summary"));
-        this.searchInput = document.getElementById('search-input');
-        this.searchInput.addEventListener('keyup', this.search);
+        this.searchInput = document.getElementById("search-input");
+        this.searchInput.addEventListener("keyup", this.search);
     },
 
     search: function () {
         let searchValue = Search.searchInput.value.toLowerCase();
         Search.threads.forEach((thread) => {
-            let subject = thread.childNodes[1].textContent.toLowerCase();
-            let correspondents = thread.childNodes[3].textContent.toLowerCase();
-            if (subject.indexOf(searchValue) === -1 && correspondents.indexOf(searchValue) === -1) thread.classList.add('off');
-            else thread.classList.remove('off');
+            let subject = thread.childNodes[3].textContent.toLowerCase();
+            let correspondents = thread.childNodes[5].textContent.toLowerCase();
+            if (subject.indexOf(searchValue) === -1 && correspondents.indexOf(searchValue) === -1) thread.classList.add("off");
+            else thread.classList.remove("off");
         });
     }
 
 };
-Search.init();
 
 let switchLightDark = document.getElementById("switch-light-dark");
 let light = true;

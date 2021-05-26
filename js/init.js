@@ -2,6 +2,30 @@ const Mails = {}; // Main object
 const Threads = [];
 let token;
 
+function fillTemplate(templateId, data, elemId) {
+    let template = $(`#${templateId}`).html();
+    Mustache.parse(template);
+    let rendered = Mustache.render(template, data);
+    $(`#${elemId}`).html(rendered);
+}
+
+function fillMailsTemplate() {
+    let firstMsg = [];
+    let template = $(`#template-threadsList`).html();
+    Mustache.parse(template);
+    for (let thread of Threads) {
+        Mails[thread.folderName][thread.threadId].mails.forEach(mail => {
+            if (!firstMsg.includes(thread.threadId)) {
+                let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);
+                let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate});
+                $(`#threads-list tbody`).append(rendered);
+                firstMsg.push(thread.threadId);
+            }
+        });
+    }
+    Search.init();
+}
+
 async function start() {
     let getToken = await browser.storage.local.get('token');
     if (getToken.token !== undefined) {
@@ -31,6 +55,10 @@ async function start() {
                     addToMails(threadId, data, message, folder.name);
                 } else addToMails(-1, null, message, folder.name);
             }
+            // Fills folders panel
+            fillTemplate("template-listFolders", Object.keys(Mails), "folders ul");
+            // Fills thread list (right upper panel);
+            fillMailsTemplate();
         }
     } else {
         $("#main").hide();
@@ -65,14 +93,16 @@ async function getHeaderFromMessageId(id) {
     return tab;
 }
 
-function getEventId(message) {    
+function getEventId(message) {   
     let header = message.headerMessageId;
     let index = header.indexOf("@github.com");
     header = header.split('/');
-    if (index > -1 && header[2] == 'issues') {
+    if (header[2] == "issue") header[2] = "issues";
+    if (header[2] == "pulls") header[2] = "pull";
+    if (index > -1 && header[2] == "issues") {
         return [header[3], header[1], header[2], header[0]]; // number & repo & event
     } 
-    if (index > -1 && header[2] == 'pull') {
+    if (index > -1 && header[2] == "pull") {
         let id = header[3];
         if (id.length > 1) {
             id = id.slice(0,1);
@@ -89,7 +119,15 @@ function isThreaded(message) {
 
 function formateDate(_date) {
     let date = new Date(_date);
-    return date.getDate() + '/' + (date.getMonth()+1) + '/' + date.getFullYear() + ' ' + date.getHours() + ':' + date.getMinutes();
+    let day = date.getDate();
+    let month = date.getMonth() + 1;
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    if (day >= 0 && day < 10) day = `0${day}`;
+    if (month >= 0 && month < 10) month = `0${month}`;
+    if (hours >= 0 && hours < 10) hours = `0${hours}`;
+    if (minutes >= 0 && minutes < 10) minutes = `0${minutes}`;
+    return `${day}/${month}/${date.getFullYear()} ${hours}:${minutes}`;
 }
 
 function addToThreads(message) {    

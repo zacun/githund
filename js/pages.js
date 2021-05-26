@@ -4,29 +4,6 @@
  ********************
  ********************/
 
-function fillTemplate(templateId, data, elemId) {
-    let template = $(`#${templateId}`).html();
-    Mustache.parse(template);
-    let rendered = Mustache.render(template, data);
-    $(`#${elemId}`).html(rendered);
-}
-
-function fillMailsTemplate() {
-    let firstMsg = [];
-    let template = $(`#template-threadsList`).html();
-    Mustache.parse(template);
-    for (let thread of Threads) {
-        Mails[thread.folderName][thread.threadId].mails.forEach(mail => {
-            if (!firstMsg.includes(thread.threadId)) {
-                let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);
-                let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate});
-                $(`#threads-list tbody`).append(rendered);
-                firstMsg.push(thread.threadId);
-            }
-        });
-    }
-}
-
 async function getMessagesFromThread(threadId, folder) {
     let tmp = Mails[folder][threadId].mails;
     let res = [];
@@ -125,11 +102,6 @@ function openEvent(owner, repo, event, eventId) {
  * Calls To Functions
  ********************
  ********************/
-
-// Fills folders panel
-fillTemplate("template-listFolders", Object.entries(Mails).keys(), "folders ul");
-// Fills thread list (right upper panel);
-fillMailsTemplate();
 
 // Fills #threads-panel when a .thread-summary element is clicked
 clickEventTemplate(".thread-summary", async (e) => {

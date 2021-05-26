@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="../css/style.css">
     <script src="../utilities/jquery-3.6.0.min.js" type="module"></script>
     <script src="../utilities/mustache.min.js" type="module"></script>
-    <script src="../js/init.js"></script>
 </head>
 <body>
     <div id="error" class="off">
@@ -70,7 +69,7 @@
     <!-- Templates -->
     <script id="template-listFolders" type="x-tmpl-mustache">
         {{#.}}
-            <li class="folder-name">{{name}}</li>
+            <li class="folder-name">{{.}}</li>
         {{/.}}
     </script>
     <script id="template-threadsList" type="x-tmpl-mustache">
@@ -121,6 +120,7 @@
     </script>
 
     <!-- Scripts -->
+    <script defer src="../js/init.js"></script>
     <script defer src="../js/pages.js"></script>
     <script defer src="../js/ui-script.js"></script>
 </body>
