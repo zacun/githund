@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="../css/style.css">
     <script src="../utilities/jquery-3.6.0.min.js" type="module"></script>
     <script src="../utilities/mustache.min.js" type="module"></script>
-    <script src="../js/page.js"></script>
+    <script src="../js/init.js"></script>
 </head>
 <body>
     <div id="error" class="off">
@@ -96,29 +96,32 @@
             </div>
         </div>
         <div id="thread-buttons">
-            <button id="unsubscribe" class="light-button padding-small">Unsubscribe</button>
-            <button id="open" class="light-button padding-small">Open ticket</button>
-            <button id="close" class="light-button padding-small">Close ticket</button>
-            <button id="visit" class="light-button padding-small">Go to Github</button>
+            <button id="unsub-thread" class="light-button padding-small">Unsubscribe</button>
+            <button id="open-thread" class="light-button padding-small">Open ticket</button>
+            <button id="close-thread" class="light-button padding-small">Close ticket</button>
+            <button id="visit-thread" class="light-button padding-small">Go to Github</button>
             <button id="archive-thread" class="light-button padding-small">Archive thread</button>
-            <button id="delete-all" class="light-button padding-small">Delete thread</button>
+            <button id="delete-thread" class="light-button padding-small">Delete thread</button>
         </div>
     </script>
     <script id="template-thread-messages" type="x-tmpl-mustache">
-        {{#.}}
-            <div class="msg" data-id="{{id}}">
-                <div class="msg-header light-background">
-                    <div>{{author}}, {{date}}</div>
-                    <div><button class="light-button small" data-id="{{id}}">Delete mail</button></div>
+        <div id="thread-messages-container">
+            {{#.}}
+                <div class="msg" data-id="{{id}}">
+                    <div class="msg-header light-background">
+                        <div>{{author}}, {{date}}</div>
+                        <div><button class="light-button small delete-mail" data-id="{{id}}">Delete mail</button></div>
+                    </div>
+                    <div class="msg-content">
+                        {{{content}}}
+                    </div>
                 </div>
-                <div class="msg-content">
-                    {{{content}}}
-                </div>
-            </div>
-        {{/.}}
+            {{/.}}
+        </div>
     </script>
 
     <!-- Scripts -->
-    <script src="../js/ui-script.js"></script>
+    <script defer src="../js/pages.js"></script>
+    <script defer src="../js/ui-script.js"></script>
 </body>
 </html>
