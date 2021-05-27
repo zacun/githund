@@ -27,6 +27,9 @@
                     <h2>Folders</h2>
                     <ul></ul>
                 </div>
+                <div id="change-token">
+                    <button id="btn-token" class="light-button small">Change your GitHub token</button>
+                </div>
                 <div id="light-dark-mode">
                     <button id="switch-light-dark" class="light-button small">Switch to Dark Mode</button>
                 </div>
@@ -75,7 +78,12 @@
     <script id="template-threadsList" type="x-tmpl-mustache">
         {{#.}}
             <tr data-id="{{id}}" data-folder="{{folder}}" data-threadid="{{threadid}}" class="thread-summary">
-                <td>{{read}} {{open}} {{merge}}</td>
+                <td>
+                    <span class="read-state">&#10003;</span>
+                    <span class="open-state">Open</span>
+                    <span class="closed-state">Closed</span>
+                    <span class="merged-state">Merged</span>
+                </td>
                 <td>{{subject}}</td>
                 <td>{{author}}</td>
                 <td>{{realdate}}</td>

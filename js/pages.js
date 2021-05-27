@@ -44,8 +44,14 @@ function clickEventTemplate(elementSelector, callback) {
     $(document).on("click", `${elementSelector}`, callback);
 }
 
-function closeEvent(owner, repo, event, eventId) {
+async function closeEvent(owner, repo, event, eventId) {
     let url;
+    let getToken = await browser.storage.local.get("token");
+    let token = getToken.token;
+    if (!token) { 
+        alert("You need a token to do this");
+        return;
+    }
     if (event == "pull") url = `https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`;
     else url = `https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`;
     fetch(url, {
@@ -61,8 +67,14 @@ function closeEvent(owner, repo, event, eventId) {
     });
 }
 
-function openEvent(owner, repo, event, eventId) {
+async function openEvent(owner, repo, event, eventId) {
     let url;
+    let getToken = await browser.storage.local.get("token");
+    let token = getToken.token;
+    if (!token) { 
+        alert("You need a token to do this");
+        return;
+    }
     if (event == "pull") url = `https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`;
     else url = `https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`;
     fetch(url, {
@@ -214,6 +226,15 @@ clickEventTemplate(".refresh", (e) => {
     }
     $(".table tbody tr").remove();
     start();
+});
+
+clickEventTemplate("#change-token", (e) => {
+    token = prompt("Please enter your generated Github token");
+    while (token == '') {
+        token = prompt("You must enter a valid generated Github token");
+    }
+    if (token === null) return;
+    browser.storage.local.set({token: token});
 });
 
 // Sort threads list by date

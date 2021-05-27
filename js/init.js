@@ -1,6 +1,5 @@
 const Mails = {}; // Main object
 const Threads = [];
-let token;
 
 function fillTemplate(templateId, data, elemId) {
     let template = $(`#${templateId}`).html();
@@ -16,11 +15,13 @@ function fillMailsTemplate() {
     for (let thread of Threads) {
         Mails[thread.folderName][thread.threadId].mails.forEach(mail => {
             if (!firstMsg.includes(thread.threadId)) {
-                let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);
-                let read = thread.read == true ? "&#10003;" : "Unread";
-                let merge = thread.state[1];
-                let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate, read: read, open: thread.state[0], merge: merge});
+                let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);                
+                let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate});
                 $(`#threads-list tbody`).append(rendered);
+                thread.read == true ? $(".thread-summary .read-state").eq(thread.threadId).show() : $(".thread-summary .read-state").eq(thread.threadId).hide();
+                thread.state[0] == "closed" ? $(".thread-summary .closed-state").eq(thread.threadId).show() : $(".thread-summary .closed-state").eq(thread.threadId).hide();
+                thread.state[0] == "open" ? $(".thread-summary .open-state").eq(thread.threadId).show() : $(".thread-summary .open-state").eq(thread.threadId).hide();
+                thread.state[1] == true ? $(".thread-summary .merged-state").eq(thread.threadId).show() : $(".thread-summary .merged-state").eq(thread.threadId).hide();
                 firstMsg.push(thread.threadId);
             }
         });
@@ -30,19 +31,20 @@ function fillMailsTemplate() {
 
 async function start() {
     let getToken = await browser.storage.local.get('token');
-    if (getToken.token !== undefined) {
-        token = getToken.token;
-    } else {
+    let token = getToken.token;
+    if (!token) {
         token = prompt("Please enter your generated Github token");
-        while (token == null || token == '') {
-            token = prompt("Please enter your valid generated Github token");
+        while (token == '') {
+            token = prompt("You must enter a valid generated Github token");
         }
-        browser.storage.local.set({token: token});
+        if (token == null) {
+            alert("You will need a token to use the extension. Please use the button at the left to set your token.");            
+        } else browser.storage.local.set({token: token});        
     }
     let getThreadFolder = await browser.storage.local.get('threads');
     if (getThreadFolder.threads !== undefined) Threads = getThreadFolder.threads;
     let getStorage = await browser.storage.local.get('folders');
-    if (getStorage.folders !== undefined) {
+    if (getStorage.folders !== undefined) {        
         for (let folder of getStorage.folders) {
             let messages = await getGitMessagesFromFolder(folder);
             for (let message of messages) {
@@ -58,18 +60,20 @@ async function start() {
                 } else addToMails(-1, null, message, folder.name);
             }            
         }
-        let cpt = 1;
-        for (let thread of Threads) {
-            getState(thread.owner, thread.repo, thread.event, thread.eventId).then(response => {
-                thread.state = response;
-                cpt++;
-                if(cpt == Threads.length) {
-                    setTimeout(() => {
-                        $(".table tbody tr").remove();
-                        fillMailsTemplate();
-                    }, 65);                    
-                }
-            });
+        if (token != null && token != '') {
+            let cpt = 1;
+            for (let thread of Threads) {
+                getState(thread.owner, thread.repo, thread.event, thread.eventId).then(response => {
+                    thread.state = response;
+                    cpt++;
+                    if(cpt == Threads.length) {
+                        setTimeout(() => {
+                            $(".table tbody tr").remove();
+                            fillMailsTemplate();
+                        }, 65);                    
+                    }
+                });
+            }
         }
         // Fills folders panel
         fillTemplate("template-listFolders", Object.keys(Mails), "folders ul");
@@ -82,8 +86,14 @@ async function start() {
 }
 
 async function getState(owner, repo, event, eventId) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         let url;
+        let getToken = await browser.storage.local.get("token");
+        let token = getToken.token;
+        if (!token) { 
+            alert("You need a token to do this");
+            return;
+        }
         if (event == "pull") url = `https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`;
         else url = `https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`;
         fetch(url, {

@@ -183,6 +183,31 @@ th {
 .th-date {
     cursor: pointer;
 }
+.closed-state, .merged-state, .open-state {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 10px;
+    border: 1px solid;
+    border-radius: 1rem;
+    white-space: nowrap;
+    text-align: center;
+    font-weight: bold;
+}
+.closed-state {
+    color: #f85149;
+    background-color: rgba(218, 54, 51, 0.1);
+    border-color: rgba(218, 54, 51, 0.4);
+}
+.merged-state {
+    color: #a371f7;
+    background-color: rgba(188, 140, 255, 0.1);
+    border-color: rgba(188, 140, 255, 0.4);
+}
+.open-state {
+    color: rgb(63, 185, 69);
+    background-color: rgba(212, 255, 212, 0.1);
+    border-color: rgba(0, 255, 76, 0.4);
+}
 /**
 * Messages content list panel
 */
