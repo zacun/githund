@@ -41,20 +41,21 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th id="th-state">
+                            <th id="th-state" data-type="text-short">
                                 <span>State</span>
-                                <span id="state-resize"></span>
+                                <span class="resize"></span>
                             </th>
-                            <th id="th-subject">
+                            <th id="th-subject" data-type="text-long">
                                 <span>Subject</span>
-                                <span id="subject-resize"></span>
+                                <span class="resize"></span>
                             </th>
-                            <th id="th-correspondent">
+                            <th id="th-correspondent" data-type="text-long">
                                 <span>Correspondents</span>
-                                <span id="correspondent-resize"></span>
+                                <span class="resize"></span>
                             </th>
-                            <th id="th-date" class="th-date" data-sort="0">
+                            <th id="th-date" class="th-date" data-type="text-short" data-sort="0">
                                 <span>Date</span>
+                                <span class="resize"></span>
                             </th>
                         </tr>
                     </thead>
@@ -80,9 +81,9 @@
             <tr data-id="{{id}}" data-folder="{{folder}}" data-threadid="{{threadid}}" class="thread-summary">
                 <td>
                     <span class="read-state">&#10003;</span>
-                    <span class="open-state">Open</span>
-                    <span class="closed-state">Closed</span>
-                    <span class="merged-state">Merged</span>
+                    <span class="open-state">open</span>
+                    <span class="closed-state">closed</span>
+                    <span class="merged-state">merged</span>
                 </td>
                 <td>{{subject}}</td>
                 <td>{{author}}</td>
@@ -114,7 +115,7 @@
     <script id="template-thread-messages" type="x-tmpl-mustache">
         <div id="thread-messages-container">
             {{#.}}
-                <div class="msg" data-id="{{id}}">
+                <div class="msg lighter-background" data-id="{{id}}">
                     <div class="msg-header light-background">
                         <div>{{author}}, {{date}}</div>
                         <div><button class="light-button small delete-mail" data-id="{{id}}">Delete mail</button></div>

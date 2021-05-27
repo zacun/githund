@@ -28,11 +28,11 @@ ul {
     max-height: 100vh;
 }
 .dark-background {
-    color: #d4d4d5;
+    color: white;
     background-color: #38383d;
 }
 .darker-background {
-    color: #d4d4d5;
+    color: white;
     background-color: #323234;
 }
 .dark-button {
@@ -40,7 +40,7 @@ ul {
     border: 1px solid #d4d4d5;
     cursor: pointer;
     background-color: #666667;
-    color: #d4d4d5;
+    color: white;
     font-size: 14px;
 }
 .dark-button:active {
@@ -87,7 +87,7 @@ ul {
 * left panel
 */
 #left-panel {
-    min-width: 12rem;
+    min-width: 15vw;
     position: relative;
     border-right: 1px solid gray;
     padding-top: 0.5rem;
@@ -126,62 +126,69 @@ ul {
     bottom: 1rem;
     max-width: 12rem;
 }
-#light-dark-mode {
+#light-dark-mode, #change-token{
     padding-left: 0.5rem;
 }
 /**
 * threads list panel
 */
 #threads-list {
+    max-width: 85vw;
     min-height: 15vh;
     height: 30vh;
-    overflow-y: scroll;
+    overflow: scroll;
 }
 table {
-    width: 100%;
+    min-width: 100%;
+    width: auto;
+    display: grid;
+    flex: 1;
     border-collapse: collapse;
+    grid-template-columns: 
+        minmax(125px, 1.67fr) 
+        minmax(125px, 3.33fr)
+        minmax(125px, 3.33fr)
+        minmax(125px, 1.67fr);
 }
-thead tr {
-    border-bottom: 1px solid grey;
+thead, tbody, tr {
+    display: contents;
+}
+th, td {
+    font-weight: normal;
+    font-size: 0.8rem;
+    padding-left: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: relative;
+    text-align: left;
 }
 table th + th {
     border-left: 1px solid grey;
-} 
+}
 th {
-    font-weight: normal;
-    font-size: 0.8rem;
-    text-align: left;
-    text-indent: 0.5rem;
-    position: relative;
-    min-width: 10rem;
+    border-bottom: 1px solid grey;
 }
-#th-state {
-    min-width: 1rem;
-    width: 10%;
-}
-#th-correspondent, #th-subject {
-    min-width: 1rem;
-    width: 35%;
-}
-#subject-resize, #correspondent-resize, #state-resize {
+.resize {
     position: absolute;
     top: 0;
     bottom: 0;
     right: -5px;
     width: 10px;
-    display: inline-block;
     cursor: e-resize;
 }
 .thread-summary {
     cursor: pointer;
     text-indent: 0.5rem;
-    font-size: 0.8rem;
 }
-.thread-summary:hover {
+.thread-summary:hover td {
     background-color: rgba(0, 0, 0, 0.2);
 }
 .th-date {
     cursor: pointer;
+}
+td:first-child span {
+    margin-right: 0.25rem;
 }
 .closed-state, .merged-state, .open-state {
     display: inline-block;
@@ -190,8 +197,9 @@ th {
     border: 1px solid;
     border-radius: 1rem;
     white-space: nowrap;
-    text-align: center;
+    text-align: left;
     font-weight: bold;
+    text-indent: 0;
 }
 .closed-state {
     color: #f85149;

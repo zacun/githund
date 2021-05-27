@@ -38,9 +38,56 @@ let Resize = function (elementToResize, elementForResizing, direction) {
 };
 new Resize(document.getElementById("left-panel"), document.getElementById("left-panel-resize"), "width");
 new Resize(document.getElementById("threads-list"), document.getElementById("thread-content-resize"), "height");
-new Resize(document.getElementById("th-subject"), document.getElementById("subject-resize"), "width");
-new Resize(document.getElementById("th-correspondent"), document.getElementById("correspondent-resize"), "width");
-new Resize(document.getElementById("th-state"), document.getElementById("state-resize"), "width");
+
+// Most of ResizeTable code comes from https://webdevtrick.com/resizable-table-columns/
+// Makes resizing columns from threads list less buggy than with Resize()
+let ResizeTable = {
+    min: 125,
+    max: {
+        "text-long": 3.33,
+        "text-short": 1.67,
+    },
+    table: document.querySelector(".table"),
+    cols: [],
+    thBeingResized: null,
+
+    begin: ({ target }) => {
+        ResizeTable.thBeingResized = target.parentNode;
+        window.addEventListener("mousemove", ResizeTable.resize);
+        window.addEventListener("mouseup", ResizeTable.end);
+    },
+
+    resize: (e) => {
+        e.preventDefault();
+        let scrollOffsetX = document.documentElement.scrollLeft;
+        let width = scrollOffsetX + e.clientX - ResizeTable.thBeingResized.offsetLeft;
+
+        let col = ResizeTable.cols.find(({ th }) => th === ResizeTable.thBeingResized);
+        col.size = Math.max(ResizeTable.min, width) + "px";
+
+        ResizeTable.cols.forEach((col) => {
+            if (col.size.startsWith("minmax")) col.size = parseInt(col.th.clientWidth, 10) + "px";
+        });
+
+        ResizeTable.table.style.gridTemplateColumns = 
+            ResizeTable.cols.map(({header, size}) => size).join(" ");
+    },
+
+    end: () => {
+        window.removeEventListener("mousemove", ResizeTable.resize);
+        window.removeEventListener("mouseup", ResizeTable.end);
+        ResizeTable.thBeingResized = null;
+    }
+
+}
+document.querySelectorAll("th").forEach((th) => {
+    let max = ResizeTable.max[th.dataset.type] + "fr";
+    ResizeTable.cols.push({
+        th,
+        size: `minmax(${ResizeTable.min}px, ${max})`,
+    });
+    th.querySelector(".resize").addEventListener("mousedown", ResizeTable.begin);
+});
 
 const Search = {
     init: function () {
@@ -70,6 +117,7 @@ switchLightDark.addEventListener("click", (e) => {
     let main = document.querySelector("#main");
     let threadActions = document.querySelector("#thread-actions");
     let searchInput = document.getElementById('search-input');
+    let threadMessagesContent = document.getElementById("thread-messages-content");
 
     if (light) {
         // switch to dark mode
@@ -80,6 +128,9 @@ switchLightDark.addEventListener("click", (e) => {
 
         threadActions.classList.remove("light-background");
         threadActions.classList.add("darker-background");
+
+        threadMessagesContent.classList.remove("lighter-background");
+        threadMessagesContent.classList.add("darker-background");
 
         searchInput.classList.remove("light-input");
         searchInput.classList.add("dark-input");
@@ -97,6 +148,9 @@ switchLightDark.addEventListener("click", (e) => {
 
         threadActions.classList.remove("darker-background");
         threadActions.classList.add("light-background");
+
+        threadMessagesContent.classList.remove("darker-background");
+        threadMessagesContent.classList.add("lighter-background");
 
         searchInput.classList.remove("dark-input");
         searchInput.classList.add("light-input");
