@@ -17,7 +17,9 @@ function fillMailsTemplate() {
         Mails[thread.folderName][thread.threadId].mails.forEach(mail => {
             if (!firstMsg.includes(thread.threadId)) {
                 let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);
-                let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate});
+                let read = thread.read == true ? "&#10003;" : "Unread";
+                let merge = thread.state[1];
+                let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate, read: read, open: thread.state[0], merge: merge});
                 $(`#threads-list tbody`).append(rendered);
                 firstMsg.push(thread.threadId);
             }
@@ -44,7 +46,7 @@ async function start() {
         for (let folder of getStorage.folders) {
             let messages = await getGitMessagesFromFolder(folder);
             for (let message of messages) {
-                if (isThreaded(message)) {
+                if (isThreaded(message)) {                    
                     let threadId = addToThreads(message);                    
                     let data = {
                         threadId: threadId,
@@ -54,16 +56,52 @@ async function start() {
                     };
                     addToMails(threadId, data, message, folder.name);
                 } else addToMails(-1, null, message, folder.name);
-            }
-            // Fills folders panel
-            fillTemplate("template-listFolders", Object.keys(Mails), "folders ul");
-            // Fills thread list (right upper panel);
-            fillMailsTemplate();
+            }            
         }
+        let cpt = 1;
+        for (let thread of Threads) {
+            getState(thread.owner, thread.repo, thread.event, thread.eventId).then(response => {
+                thread.state = response;
+                cpt++;
+                if(cpt == Threads.length) {
+                    setTimeout(() => {
+                        $(".table tbody tr").remove();
+                        fillMailsTemplate();
+                    }, 65);                    
+                }
+            });
+        }
+        // Fills folders panel
+        fillTemplate("template-listFolders", Object.keys(Mails), "folders ul");
+        // Fills thread list (right upper panel);
+        fillMailsTemplate();
     } else {
         $("#main").hide();
         $("#error").show();
     }
+}
+
+async function getState(owner, repo, event, eventId) {
+    return new Promise((resolve, reject) => {
+        let url;
+        if (event == "pull") url = `https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`;
+        else url = `https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`;
+        fetch(url, {
+            method: "GET",
+            headers: {
+                Authorization: `token ${token}`, 
+                Accept: "application/vnd.github.v3+json"
+            },
+        })
+        .then(async (response) => {        
+            let data = await response.json();
+            let merged = data.merged === undefined ? false : data.merged;
+            resolve([data.state, merged]);
+        })
+        .catch((error) => {
+            throw new Error("Error:", error);
+        });
+    });    
 }
 
 async function getGitMessagesFromFolder(folder) {
@@ -82,7 +120,7 @@ async function getGitMessagesFromFolder(folder) {
             res.push(msg);
         }
     }
-    return res;       
+    return res;
 }
 
 async function getHeaderFromMessageId(id) {
@@ -144,6 +182,9 @@ function addToThreads(message) {
                     if (message.date > t.realDate) {
                         t.realDate = message.date;
                     }
+                    if (message.read == false) {
+                        t.read = false;
+                    }
                     return parseInt(t.threadId);
                 }
             }
@@ -155,7 +196,9 @@ function addToThreads(message) {
                 folderName: message.folder.name,
                 realDate: message.date,
                 threadId: Threads.length,
-                owner: owner
+                owner: owner,
+                read: message.read,
+                state: [],
             });
         } else {
             // No threads yet
@@ -166,7 +209,9 @@ function addToThreads(message) {
                 folderName: message.folder.name,
                 realDate: message.date,
                 threadId: 0,
-                owner: owner
+                owner: owner,
+                read: message.read,
+                state: [],                
             };
         }
         return Threads.length-1;
@@ -189,7 +234,7 @@ function addToMails(threadId, data, message, folder) {
                     date: formateDate(message.date),
                     realDate: message.date,
                     folder: folder,
-                    threadId: threadId,  
+                    threadId: threadId,
                 });
                 return;
             }
@@ -206,7 +251,7 @@ function addToMails(threadId, data, message, folder) {
                 date: formateDate(message.date),
                 realDate: message.date,
                 folder: folder,
-                threadId: threadId,  
+                threadId: threadId,
             }]
         };
     }   

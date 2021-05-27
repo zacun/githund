@@ -44,25 +44,6 @@ function clickEventTemplate(elementSelector, callback) {
     $(document).on("click", `${elementSelector}`, callback);
 }
 
-async function getState(owner, repo, event, eventId) {
-    let url;
-    if (event == "pull") url = `https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`;
-    else url = `https://api.github.com/repos/${owner}/${repo}/${event}/${eventId}`;
-    let response = await fetch(url, {
-        method: "GET",
-        headers: {
-            Authorization: `token ${token}`, 
-            Accept: "application/vnd.github.v3+json"
-        },
-    });
-    if (!response.ok) {
-        throw new Error("Error:", response.status);
-    }
-    let data = await response.json();
-    let merged = data.merged === undefined ? false : data.merged;
-    return [data.state, merged];
-}
-
 function closeEvent(owner, repo, event, eventId) {
     let url;
     if (event == "pull") url = `https://api.github.com/repos/${owner}/${repo}/${event}s/${eventId}`;
@@ -107,7 +88,16 @@ function openEvent(owner, repo, event, eventId) {
 clickEventTemplate(".thread-summary", async (e) => {
     let threadId = e.currentTarget.attributes["data-threadid"].value;
     let folder = e.currentTarget.attributes["data-folder"].value;
-    let messages = await getMessagesFromThread(threadId, folder);
+    let messages = await getMessagesFromThread(threadId, folder);    
+    await browser.messages.update(Mails[folder][threadId].mails[0].id, {read: true});
+    let allRead = true;
+    for (let mail of Mails[folder][threadId].mails) {
+        if (mail.read == false) {
+            allRead = false;
+            break;
+        }
+    };
+    if (allRead == true) Threads[threadId].read = true;
     fillTemplate("template-thread-actions", {
         threadid: threadId,
         folder: folder,
@@ -216,6 +206,14 @@ clickEventTemplate("#archive-thread", async (e) => {
         if (thread.threadId == threadId) thread = null;
     }
     */
+});
+
+clickEventTemplate(".refresh", (e) => {
+    for (let thread of Threads) {
+        Mails[thread.folderName][thread.threadId].mails = [];
+    }
+    $(".table tbody tr").remove();
+    start();
 });
 
 // Sort threads list by date

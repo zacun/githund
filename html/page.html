@@ -15,7 +15,7 @@
         <section id="left-panel">
             <div id=left-panel-content>
                 <div id="refresh">
-                    <button class="light-button big padding-small">Refresh Mails &#10227;</button>
+                    <button class="light-button big padding-small refresh">Refresh Mails &#10227;</button>
                 </div>
                 <div id="search">
                     <h2>Search</h2>
@@ -75,7 +75,7 @@
     <script id="template-threadsList" type="x-tmpl-mustache">
         {{#.}}
             <tr data-id="{{id}}" data-folder="{{folder}}" data-threadid="{{threadid}}" class="thread-summary">
-                <td></td>
+                <td>{{read}} {{open}} {{merge}}</td>
                 <td>{{subject}}</td>
                 <td>{{author}}</td>
                 <td>{{realdate}}</td>
