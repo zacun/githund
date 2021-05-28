@@ -266,7 +266,8 @@ td:first-child span {
 }
 .msg {
     margin-bottom: 1.5rem;
-    max-width: 55rem;
+    max-width: 900px;
+    width: 600px;
     box-shadow: 1px 1px 2px gray;
     border-radius: 5px;
     position: relative;

@@ -109,7 +109,7 @@ const Search = {
 };
 
 let switchLightDark = document.getElementById("switch-light-dark");
-let light = true;
+let lightMode = true;
 switchLightDark.addEventListener("click", (e) => {
     e.preventDefault();
 
@@ -119,9 +119,9 @@ switchLightDark.addEventListener("click", (e) => {
     let searchInput = document.getElementById('search-input');
     let threadMessagesContent = document.getElementById("thread-messages-content");
 
-    if (light) {
+    if (lightMode) {
         // switch to dark mode
-        light = false;
+        lightMode = false;
         switchLightDark.innerHTML = "Switch to Light Mode";
 
         main.classList.add("dark-background");
@@ -141,7 +141,7 @@ switchLightDark.addEventListener("click", (e) => {
         });
     } else {
         // switch to light mode
-        light = true;
+        lightMode = true;
         switchLightDark.innerHTML = "Switch to Dark Mode";
 
         main.classList.remove("dark-background");

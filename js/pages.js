@@ -118,6 +118,17 @@ clickEventTemplate(".thread-summary", async (e) => {
         date: formateDate(Mails[folder][threadId].data.date)
     }, "thread-actions");
     fillTemplate("template-thread-messages", messages, "thread-messages-content");
+    if (lightMode) {
+        document.querySelectorAll("button").forEach((el) => {
+            el.classList.remove("dark-button");
+            el.classList.add("light-button");
+        });
+    } else {
+        document.querySelectorAll("button").forEach((el) => {
+            el.classList.remove("light-button");
+            el.classList.add("dark-button");
+        });
+    }
 });
 
 // Unsubscribe from thread through sending mail

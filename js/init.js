@@ -75,13 +75,11 @@ async function start() {
                         setTimeout(() => {
                             $(".table tbody tr").remove();
                             fillMailsTemplate();
-                        }, 100);                    
+                        }, 250);                    
                     }
                 });
             }
         }
-        console.log(Threads);
-        console.log(Mails);
         // Fills folders panel
         fillTemplate("template-listFolders", Object.keys(Mails), "folders ul");
         // Fills thread list (right upper panel);
