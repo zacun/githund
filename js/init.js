@@ -48,16 +48,16 @@ async function start() {
         for (let folder of getStorage.folders) {
             let messages = await getGitMessagesFromFolder(folder);
             for (let message of messages) {
-                if (isThreaded(message)) {                    
-                    let threadId = addToThreads(message);                    
+                if (isThreaded(message[1])) {                    
+                    let threadId = addToThreads(message[0], message[1]);                    
                     let data = {
                         threadId: threadId,
                         eventId: Threads[threadId].eventId,
                         event: Threads[threadId].event,
                         repo: Threads[threadId].repo,
                     };
-                    addToMails(threadId, data, message, folder.name);
-                } else addToMails(-1, null, message, folder.name);
+                    addToMails(threadId, data, message[0], folder.name);
+                } else addToMails(-1, null, message[0], folder.name);
             }            
         }
         if (token != null && token != '') {
@@ -70,11 +70,13 @@ async function start() {
                         setTimeout(() => {
                             $(".table tbody tr").remove();
                             fillMailsTemplate();
-                        }, 65);                    
+                        }, 100);                    
                     }
                 });
             }
         }
+        console.log(Threads);
+        console.log(Mails);
         // Fills folders panel
         fillTemplate("template-listFolders", Object.keys(Mails), "folders ul");
         // Fills thread list (right upper panel);
@@ -126,8 +128,9 @@ async function getGitMessagesFromFolder(folder) {
     for (let msg of messages) {
         let headers = await getHeaderFromMessageId(msg.id);
         let header = headers[0];
-        if (header.hasOwnProperty("x-github-recipient-address")) {
-            res.push(msg);
+        if (header.hasOwnProperty("x-github-recipient-address") && header.hasOwnProperty("message-id")) {
+            let messageId = header["message-id"][0];
+            res.push([msg, messageId.toString()]);
         }
     }
     return res;
@@ -141,27 +144,23 @@ async function getHeaderFromMessageId(id) {
     return tab;
 }
 
-function getEventId(message) {   
-    let header = message.headerMessageId;
+function getEventId(header) {
     let index = header.indexOf("@github.com");
     header = header.split('/');
     if (header[2] == "issue") header[2] = "issues";
     if (header[2] == "pulls") header[2] = "pull";
-    if (index > -1 && header[2] == "issues") {
-        return [header[3], header[1], header[2], header[0]]; // number & repo & event
-    } 
+    if (header[0].charAt(0) == "<") header[0] = header[0].slice(1);
     if (index > -1 && header[2] == "pull") {
         let id = header[3];
-        if (id.length > 1) {
-            id = id.slice(0,1);
-        }
-        return [id, header[1], header[2], header[0]]; 
+        id = id.split("@")                
+        return [id[0], header[1], header[2], header[0]];
     }
+    if (header[2] == "issues" || header[2] == "commit") return [header[3], header[1], header[2], header[0]]; // number & repo & event
     return null;
 }
 
-function isThreaded(message) {    
-    let tabEvent = getEventId(message);
+function isThreaded(header) {    
+    let tabEvent = getEventId(header);
     return tabEvent != null ? true : false;
 }
 
@@ -178,8 +177,8 @@ function formateDate(_date) {
     return `${day}/${month}/${date.getFullYear()} ${hours}:${minutes}`;
 }
 
-function addToThreads(message) {    
-    let tabEvent = getEventId(message);
+function addToThreads(message, header) {    
+    let tabEvent = getEventId(header);
     if (tabEvent) {
         let eventId = tabEvent[0];
         let repo = tabEvent[1];
