@@ -18,15 +18,20 @@ function fillMailsTemplate() {
                 let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);                
                 let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate});
                 $(`#threads-list tbody`).append(rendered);
-                thread.read == true ? $(".thread-summary .read-state").eq(thread.threadId).show() : $(".thread-summary .read-state").eq(thread.threadId).hide();
-                thread.state[0] == "closed" ? $(".thread-summary .closed-state").eq(thread.threadId).show() : $(".thread-summary .closed-state").eq(thread.threadId).hide();
-                thread.state[0] == "open" ? $(".thread-summary .open-state").eq(thread.threadId).show() : $(".thread-summary .open-state").eq(thread.threadId).hide();
-                thread.state[1] == true ? $(".thread-summary .merged-state").eq(thread.threadId).show() : $(".thread-summary .merged-state").eq(thread.threadId).hide();
+                let index = getThreadIndex(thread.threadId);
+                thread.read == true ? $(".thread-summary .read-state").eq(index).show() : $(".thread-summary .read-state").eq(index).hide();
+                thread.state[0] == "closed" ? $(".thread-summary .closed-state").eq(index).show() : $(".thread-summary .closed-state").eq(index).hide();
+                thread.state[0] == "open" ? $(".thread-summary .open-state").eq(index).show() : $(".thread-summary .open-state").eq(index).hide();
+                thread.state[1] == true ? $(".thread-summary .merged-state").eq(index).show() : $(".thread-summary .merged-state").eq(index).hide();
                 firstMsg.push(thread.threadId);
             }
         });
     }
     Search.init();
+}
+
+function getThreadIndex(threadId) {
+    return Threads.findIndex(item => item.threadId == threadId);    
 }
 
 async function start() {
