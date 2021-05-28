@@ -34,7 +34,7 @@ async function getUnsubscribeLinkFromMessage(id) {
 // Return thread infos object from Thread
 function getThreadInfos(threadId) {    
     for (let thread of Threads) {
-        if (thread.threadId == threadId) return thread;
+        if (thread && thread.threadId == threadId) return thread;
     }
     return null;
 }
@@ -182,9 +182,10 @@ clickEventTemplate("#delete-thread", async (e) => {
     document.getElementById("thread-buttons").remove();
     // Removes associated objects from Mails & Threads objects
     Mails[folder][threadId] = null;
-    for (let thread of Threads) {
-        if (thread.threadId == threadId) thread = null;
+    for (let i = 0; i < Threads.length; i++) {
+        if (Threads[i] && Threads[i].threadId == threadId) Threads[i] = null;
     }
+    console.log(1, Threads);
 });
 
 // Delete a mail from a thread
@@ -200,8 +201,22 @@ clickEventTemplate(".delete-mail", async (e) => {
         if (el.attributes["data-id"].value == id) el.remove();
     });
     // Removes associated objects from Mails object
-    for (let mail of Mails[folder][threadId].mails) {
-        if (mail.id = id) mail = null;
+    if (Mails[folder][threadId].mails.length < 2) {
+        Mails[folder][threadId] = null;
+        for (let i = 0; i < Threads.length; i++) {
+            if (Threads[i] && Threads[i].threadId == threadId) Threads[i] = null;
+        }
+        let threadsList = Array.from(document.querySelectorAll(".thread-summary"));
+        threadsList.forEach((el) => {        
+            if (el.attributes["data-threadid"].value == threadId) el.remove();        
+        });
+        document.getElementById("thread-messages-container").remove();
+        document.getElementById("thread-infos").remove();
+        document.getElementById("thread-buttons").remove();
+    } else {
+        for (let i = 0; i < Mails[folder][threadId].mails.length; i++) {
+            if (Mails[folder][threadId].mails[i].id = id) Mails[folder][threadId].mails[i] = null;
+        }
     }
 });
 
@@ -222,18 +237,18 @@ clickEventTemplate("#archive-thread", async (e) => {
     document.getElementById("thread-messages-container").remove();
     document.getElementById("thread-infos").remove();
     document.getElementById("thread-buttons").remove();
-    /*
     // Removes associated objects from Mails & Threads objects
     Mails[folder][threadId] = null;
-    for (let thread of Threads) {
-        if (thread.threadId == threadId) thread = null;
+    for (let i = 0; i < Threads.length; i++) {
+        if (Threads[i] && Threads[i].threadId == threadId) Threads[i] = null;
     }
-    */
 });
 
 clickEventTemplate(".refresh", (e) => {
     for (let thread of Threads) {
-        Mails[thread.folderName][thread.threadId].mails = [];
+        if (thread) {
+            Mails[thread.folderName][thread.threadId].mails = [];
+        }
     }
     $(".table tbody tr").remove();
     start();
@@ -252,16 +267,21 @@ clickEventTemplate("#change-token", (e) => {
 $('.th-date').click(function (e) {
     if ($(this).data().sort == "0") {
         Threads.sort((a, b) => {
-            if (a.realDate < b.realDate) return 1;
+            if (a === null) return 1;
+            else if (b === null) return -1;
+            else if (a.realDate < b.realDate) return 1;
             else if (a.realDate > b.realDate) return -1;
             else return 0;
         });
+        console.log(1, Threads);
         $(".table tbody tr").remove();
         fillMailsTemplate();
         $(this).data("sort", "1");
     } else {
         Threads.sort((a, b) => {
-            if (a.realDate < b.realDate) return -1;
+            if (a === null) return 1;
+            else if (b === null) return -1;
+            else if (a.realDate < b.realDate) return -1;
             else if (a.realDate > b.realDate) return 1;
             else return 0;
         });

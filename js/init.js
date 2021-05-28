@@ -13,25 +13,29 @@ function fillMailsTemplate() {
     let template = $(`#template-threadsList`).html();
     Mustache.parse(template);
     for (let thread of Threads) {
-        Mails[thread.folderName][thread.threadId].mails.forEach(mail => {
-            if (!firstMsg.includes(thread.threadId)) {
-                let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);                
-                let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate});
-                $(`#threads-list tbody`).append(rendered);
-                let index = getThreadIndex(thread.threadId);
-                thread.read == true ? $(".thread-summary .read-state").eq(index).show() : $(".thread-summary .read-state").eq(index).hide();
-                thread.state[0] == "closed" ? $(".thread-summary .closed-state").eq(index).show() : $(".thread-summary .closed-state").eq(index).hide();
-                thread.state[0] == "open" ? $(".thread-summary .open-state").eq(index).show() : $(".thread-summary .open-state").eq(index).hide();
-                thread.state[1] == true ? $(".thread-summary .merged-state").eq(index).show() : $(".thread-summary .merged-state").eq(index).hide();
-                firstMsg.push(thread.threadId);
-            }
-        });
+        if (thread) {
+            Mails[thread.folderName][thread.threadId].mails.forEach(mail => {
+                if (!firstMsg.includes(thread.threadId)) {
+                    let formatedDate = formateDate(Mails[thread.folderName][thread.threadId].data.date);                
+                    let rendered = Mustache.render(template, {...mail, folder: thread.folderName, threadid: thread.threadId, realdate: formatedDate});
+                    $(`#threads-list tbody`).append(rendered);
+                    let index = getThreadIndex(thread.threadId);
+                    thread.read == true ? $(".thread-summary .read-state").eq(index).show() : $(".thread-summary .read-state").eq(index).hide();
+                    thread.state[0] == "closed" ? $(".thread-summary .closed-state").eq(index).show() : $(".thread-summary .closed-state").eq(index).hide();
+                    thread.state[0] == "open" ? $(".thread-summary .open-state").eq(index).show() : $(".thread-summary .open-state").eq(index).hide();
+                    thread.state[1] == true ? $(".thread-summary .merged-state").eq(index).show() : $(".thread-summary .merged-state").eq(index).hide();
+                    firstMsg.push(thread.threadId);
+                }
+            });
+        }
     }
     Search.init();
 }
 
 function getThreadIndex(threadId) {
-    return Threads.findIndex(item => item.threadId == threadId);    
+    return Threads.findIndex(thread => {
+        if (thread) return thread.threadId == threadId;
+    });    
 }
 
 async function start() {
@@ -54,7 +58,7 @@ async function start() {
             let messages = await getGitMessagesFromFolder(folder);
             for (let message of messages) {
                 if (isThreaded(message[1])) {                    
-                    let threadId = addToThreads(message[0], message[1]);                    
+                    let threadId = addToThreads(message[0], message[1]);               
                     let data = {
                         threadId: threadId,
                         eventId: Threads[threadId].eventId,
@@ -68,16 +72,18 @@ async function start() {
         if (token != null && token != '') {
             let cpt = 1;
             for (let thread of Threads) {
-                getState(thread.owner, thread.repo, thread.event, thread.eventId).then(response => {
-                    thread.state = response;
-                    cpt++;
-                    if(cpt == Threads.length) {
-                        setTimeout(() => {
-                            $(".table tbody tr").remove();
-                            fillMailsTemplate();
-                        }, 250);                    
-                    }
-                });
+                if (thread) {
+                    getState(thread.owner, thread.repo, thread.event, thread.eventId).then(response => {
+                        thread.state = response;
+                        cpt++;
+                        if(cpt == Threads.length) {
+                            setTimeout(() => {
+                                $(".table tbody tr").remove();
+                                fillMailsTemplate();
+                            }, 250);                    
+                        }
+                    });
+                }
             }
         }
         // Fills folders panel
@@ -173,10 +179,10 @@ function formateDate(_date) {
     let month = date.getMonth() + 1;
     let hours = date.getHours();
     let minutes = date.getMinutes();
-    if (day >= 0 && day < 10) day = `0${day}`;
-    if (month >= 0 && month < 10) month = `0${month}`;
-    if (hours >= 0 && hours < 10) hours = `0${hours}`;
-    if (minutes >= 0 && minutes < 10) minutes = `0${minutes}`;
+    if (day < 10) day = `0${day}`;
+    if (month < 10) month = `0${month}`;
+    if (hours < 10) hours = `0${hours}`;
+    if (minutes < 10) minutes = `0${minutes}`;
     return `${day}/${month}/${date.getFullYear()} ${hours}:${minutes}`;
 }
 
@@ -190,7 +196,7 @@ function addToThreads(message, header) {
         if (Threads.length > 0) {
             for (let t of Threads) {
                 // Thread already exist
-                if (t.repo == repo && t.event == event && t.eventId == eventId) {
+                if (t && t.repo == repo && t.event == event && t.eventId == eventId) {
                     if (message.date > t.realDate) {
                         t.realDate = message.date;
                     }
